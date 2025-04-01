@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login Modo Arcade</title>
+    <style>
+        /* Fondo de la página */
+        body {
+            text-align: center;
+            font-family: 'Press Start 2P', cursive; /* Fuente pixelada estilo juego retro */
+            background-color: skyblue;
+            margin: 0;
+            overflow: hidden;
+        }
+
+        /* Contenedor del menú */
+        #main-menu {
+            position: absolute;
+            width: 100%;
+            height: 100vh;
+            background: url("./flappybirdbg.png") no-repeat center center;
+            background-size: cover;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Estilo del título */
+        h1 {
+            font-size: 50px;
+            color: white;
+            text-shadow: 4px 4px 0px black; /* Sombra tipo pixelada */
+            margin-bottom: 30px;
+        }
+
+        /* Estilo de los campos de entrada */
+        input {
+            background-color: #333;
+            border: 4px solid #ffaa00;
+            color: white;
+            padding: 15px 30px;
+            margin: 10px;
+            border-radius: 10px;
+            font-size: 20px;
+            outline: none;
+            transition: transform 0.1s ease, box-shadow 0.2s;
+        }
+
+        input:focus {
+            box-shadow: 0 0 10px #ffaa00;
+        }
+
+        /* Estilo de los botones */
+        button {
+            font-size: 20px;
+            font-family: 'Press Start 2P', cursive;
+            padding: 15px 30px;
+            background-color: #ffcc00;
+            border: 4px solid #ffaa00;
+            border-radius: 10px;
+            cursor: pointer;
+            margin: 10px;
+            box-shadow: 4px 4px 0px rgba(0, 0, 0, 0.98);
+            transition: transform 0.1s ease;
+        }
+
+        /* Efecto al pasar el mouse */
+        button:hover {
+            background-color: #ffaa00;
+            transform: scale(1.05);
+        }
+
+        /* Efecto al hacer clic */
+        button:active {
+            transform: scale(0.95);
+        }
+    </style>
+    <!-- Fuente estilo arcade -->
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div id="main-menu">
+        <h1>Login</h1>
+        <div>
+            <input type="text" id="username" placeholder="Usuario" required>
+            <input type="password" id="password" placeholder="Contraseña" required>
+        </div>
+        <button onclick="login()">Iniciar sesión</button>
+    </div>
+
+    <script>
+    // Función de login
+    function login() {
+    var username = document.getElementById("username").value;
+    var password = document.getElementById("password").value;
+
+    if (username === "" || password === "") {
+        alert("Por favor ingresa ambos campos.");
+        return;
+    }
+
+    fetch('http://localhost:3000/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: username, password: password })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.message === "Login exitoso!") {
+            localStorage.setItem("user", username); // Guarda el usuario en el navegador
+            window.location.href = "MainMenu.html";
+        } else {
+            alert(data.message);
+        }
+    })
+    .catch(error => console.error('Error:', error));
+}
+
+    </script>
+
+</body>
+</html>

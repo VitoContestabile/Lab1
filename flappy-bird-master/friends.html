@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mis Amigos</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap">
+    <style>
+        body {
+            text-align: center;
+            font-family: 'Press Start 2P', cursive;
+            background-color: skyblue;
+            margin: 0;
+            overflow: hidden;
+        }
+
+        #main-menu {
+            position: absolute;
+            width: 100%;
+            height: 100vh;
+            background: url("./flappybirdbg.png") no-repeat center center;
+            background-size: cover;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        h1 {
+            font-size: 50px;
+            color: white;
+            text-shadow: 4px 4px 0px black;
+            margin-bottom: 30px;
+        }
+
+        button {
+            font-size: 20px;
+            font-family: 'Press Start 2P', cursive;
+            padding: 15px 30px;
+            background-color: #ffcc00;
+            border: 4px solid #ffaa00;
+            border-radius: 10px;
+            cursor: pointer;
+            margin: 10px;
+            box-shadow: 4px 4px 0px black;
+            transition: transform 0.1s ease;
+        }
+
+        button:hover {
+            background-color: #ffaa00;
+            transform: scale(1.05);
+        }
+
+        button:active {
+            transform: scale(0.95);
+        }
+    </style>
+</head>
+<body>
+    <div id="main-menu">
+        <h1>Mis Amigos</h1>
+
+        <!-- Botones para la funcionalidad -->
+        <button onclick="getFriendRequests()">Ver Solicitudes</button>
+        <button onclick="requestFriend()">Enviar Solicitud</button>
+
+        <!-- Lista de solicitudes -->
+        <div id="friend-requests-list"></div>
+    </div>
+
+    <script>
+        // Ver solicitudes de amistad
+function getFriendRequests() {
+    fetch('http://localhost:3000/get-friend-requests', {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Error al obtener solicitudes');
+        }
+        return response.json();
+    })
+    .then(data => {
+        const requestsList = document.getElementById('friend-requests-list');
+        requestsList.innerHTML = ''; // Limpiar lista antes de mostrar
+
+        if (data.length > 0) {
+            data.forEach(request => {
+                const requestItem = document.createElement('div');
+                requestItem.classList.add('friend-item');
+                requestItem.innerHTML = `
+                    <span>Solicitud de: ${request.username} (ID: ${request.id})</span>
+                    <button onclick="acceptRequest(${request.id})">Aceptar</button>
+                    <button onclick="rejectRequest(${request.id})">Rechazar</button>
+                `;
+                requestsList.appendChild(requestItem);
+            });
+        } else {
+            requestsList.innerHTML = '<p>No tienes solicitudes pendientes.</p>';
+        }
+    })
+    .catch(error => {
+        console.error('Error al obtener las solicitudes:', error);
+        const requestsList = document.getElementById('friend-requests-list');
+        requestsList.innerHTML = `<p>Error: ${error.message}</p>`;
+    });
+}
+
+// Enviar solicitud de amistad
+function requestFriend() {
+    const friendId = prompt('Ingresa el ID del amigo al que quieres enviar la solicitud:');
+    if (friendId) {
+        fetch('http://localhost:3000/send-friend-request', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ userId: 1, friendId: parseInt(friendId) })
+        })
+        .then(response => {
+            // Verifica el estado de la respuesta
+            if (!response.ok) {
+                return response.json().then(err => { throw new Error(err.message); });
+            }
+            return response.json();
+        })
+        .then(data => {
+            alert('Solicitud de amistad enviada correctamente.');
+        })
+        .catch(error => {
+            console.error('Error al enviar solicitud:', error);
+            alert(error.message || 'Hubo un problema al enviar la solicitud.');
+        });
+    }
+}
+
+
+        // Aceptar solicitud de amistad
+        function acceptRequest(friendId) {
+            fetch('http://localhost:3000/accept-friend-request', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ userId: 1, friendId: friendId })
+            })
+            .then(response => response.json())
+            .then(data => {
+                alert(data.message);
+                getFriendRequests();  // Actualizar la lista
+            })
+            .catch(error => console.error('Error al aceptar solicitud:', error));
+        }
+
+        // Rechazar solicitud de amistad
+        function rejectRequest(friendId) {
+            fetch('http://localhost:3000/reject-friend-request', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ userId: 1, friendId: friendId })
+            })
+            .then(response => response.json())
+            .then(data => {
+                alert(data.message);
+                getFriendRequests();  // Actualizar la lista
+            })
+            .catch(error => console.error('Error al rechazar solicitud:', error));
+        }
+    </script>
+</body>
+</html>
