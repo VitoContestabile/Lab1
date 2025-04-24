@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Plappy Pird</title>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <style>
+        /* Fondo de la página */
+        body {
+            text-align: center;
+            font-family: 'Press Start 2P', cursive; /* Fuente pixelada estilo juego retro */
+            background-color: skyblue;
+            margin: 0;
+            overflow: hidden;
+        }
+
+        /* Contenedor del menú */
+        #main-menu {
+            position: absolute;
+            width: 100%;
+            height: 100vh;
+            background: url("./flappybirdbg.png") no-repeat center center;
+            background-size: cover;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Estilo del título */
+        h1 {
+            font-size: 50px;
+            color: white;
+            text-shadow: 4px 4px 0px black; /* Sombra tipo pixelada */
+            margin-bottom: 30px;
+        }
+
+        /* Estilo de los botones */
+       button {
+    width: 250px; /* Todos los botones tendrán 250px de ancho */
+    font-size: 20px;
+    font-family: 'Press Start 2P', cursive;
+    padding: 15px 30px;
+    background-color: #ffcc00;
+    border: 4px solid #ffaa00;
+    border-radius: 10px;
+    cursor: pointer;
+    margin: 10px;
+    box-shadow: 4px 4px 0px black;
+    transition: transform 0.1s ease;
+}
+
+
+        /* Efecto al pasar el mouse */
+        button:hover {
+            background-color: #ffaa00;
+            transform: scale(1.05);
+        }
+
+        /* Efecto al hacer clic */
+        button:active {
+            transform: scale(0.95);
+        }
+    </style>
+</head>
+<body>
+    <div id="main-menu">
+        <h1>Plappy Pird</h1>
+        <button onclick="navigateTo('login.html')">Login</button>
+        <button onclick="navigateTo('signup.html')">Sign up</button>
+        <button onclick="navigateTo('settingsweb.html')">Settings</button>
+    </div>
+
+    <script>
+            if (localStorage.getItem("token")) {
+        navigateTo("MainMenu.html")
+    }
+
+        function navigateTo(page) {
+            window.location.href = page;
+        }
+    </script>
+</body>
+</html>
