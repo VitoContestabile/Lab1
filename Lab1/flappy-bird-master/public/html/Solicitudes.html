@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Enviar Solicitud</title>
+    <style>
+        body {
+            font-family: 'Press Start 2P', cursive;
+            background-color: skyblue;
+            margin: 0;
+            text-align: center;
+            overflow: hidden;
+        }
+
+        #send-request-container {
+            position: absolute;
+            width: 100%;
+            height: 100vh;
+            background: url("../assets/image/flappybirdbg.png") no-repeat center center;
+            background-size: cover;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        h1 {
+            font-size: 28px;
+            color: white;
+            text-shadow: 4px 4px 0px black;
+            margin-bottom: 30px;
+        }
+
+        input {
+            background-color: #333;
+            border: 4px solid #ffaa00;
+            color: white;
+            padding: 15px 30px;
+            margin: 10px;
+            border-radius: 10px;
+            font-size: 20px;
+            text-align: center;
+            outline: none;
+            transition: box-shadow 0.2s;
+        }
+
+        input:focus {
+            box-shadow: 0 0 10px #ffaa00;
+        }
+
+        button {
+            margin-top: 10px;
+            font-size: 16px;
+            font-family: 'Press Start 2P', cursive;
+            padding: 10px 20px;
+            background-color: #ffcc00;
+            border: 4px solid #ffaa00;
+            border-radius: 10px;
+            cursor: pointer;
+            box-shadow: 4px 4px 0px rgba(0, 0, 0, 0.98);
+            transition: transform 0.1s ease;
+        }
+
+        button:hover {
+            background-color: #ffaa00;
+            transform: scale(1.05);
+        }
+
+        button:active {
+            transform: scale(0.95);
+        }
+
+        #message {
+            margin-top: 20px;
+            font-size: 14px;
+            color: white;
+            text-shadow: 2px 2px 0px black;
+        }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet" />
+</head>
+<body>
+<div id="send-request-container">
+    <h1>Mandar Solicitud</h1>
+    <input type="text" id="friendUsername" placeholder="Nombre del amigo">
+    <button onclick="sendRequest()">Enviar</button>
+    <div id="message"></div>
+    <button onclick="location.href='friends.html'">Volver al Menú</button>
+</div>
+
+<script>
+    if(!localStorage.getItem("token")){
+        navigateTo("WebMenu.html")
+  }
+    function navigateTo(page) {
+      window.location.href = page;
+    }
+    function sendRequest() {
+        const friendUsername = document.getElementById("friendUsername").value.trim();
+        const token = localStorage.getItem("token")
+        const senderId = parseJwt(token).userId
+
+
+        if (!friendUsername) {
+            document.getElementById("message").textContent = "Ingresá un nombre de usuario válido.";
+            return;
+        }
+
+        // Paso 1: Obtener el ID del amigo
+        fetch("http://localhost:3000/get-user-id", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ username: friendUsername })
+        })
+            .then(res => res.json())
+            .then(data => {
+                if (!data.userId) {
+                    document.getElementById("message").textContent = "Usuario no encontrado.";
+                    return;
+                }
+
+                const receiverId = data.userId;
+
+                // Paso 2: Enviar la solicitud
+                return fetch("http://localhost:3000/send-friend-request", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ senderId, receiverId })
+                });
+            })
+            .then(res => res.json())
+            .then(result => {
+                if (result.message) {
+                    document.getElementById("message").textContent = result.message;
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                document.getElementById("message").textContent = "Error al enviar la solicitud.";
+            });
+    }
+            function parseJwt(token) {
+                    try {
+                        const base64Url = token.split('.')[1];
+                        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+                        const jsonPayload = decodeURIComponent(atob(base64).split('').map(c => {
+                            return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+                        }).join(''));
+                        return JSON.parse(jsonPayload);
+                    } catch (e) {
+                        return null;
+                    }
+        }
+
+</script>
+</body>
+</html>

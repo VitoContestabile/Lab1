@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Tienda - Plappy Pird</title>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet" />
+  <style>
+    body {
+      font-family: 'Press Start 2P', cursive;
+      background-color: skyblue;
+      margin: 0;
+      text-align: center;
+      overflow-x: hidden;
+    }
+
+    #shop-container {
+      min-height: 100vh;
+      background: url("../assets/image/flappybirdbg.png") no-repeat center center;
+      background-size: cover;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding-top: 50px;
+    }
+
+    h1 {
+      font-size: 30px;
+      color: white;
+      text-shadow: 4px 4px 0px black;
+      margin-bottom: 40px;
+    }
+
+.items {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 30px;
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.item {
+  background-color: #ffcc00;
+  border: 4px solid #ffaa00;
+  border-radius: 15px;
+  box-shadow: 4px 4px 0px black;
+  width: 200px;
+  padding: 20px;
+  text-align: center;
+  transition: transform 0.1s ease;
+}
+
+.item:hover {
+  transform: scale(1.05);
+}
+
+.item img {
+  width: 100px;
+  height: 100px;
+  image-rendering: pixelated;
+}
+
+.item p {
+  font-size: 10px;
+  margin: 15px 0;
+  color: black;
+}
+
+.equip-btn {
+  margin-top: 10px;
+  background-color: #e6e6e6;
+  border: 3px solid #020202;
+  font-family: 'Press Start 2P', cursive;
+  font-size: 10px;
+  padding: 10px;
+  cursor: pointer;
+  border-radius: 8px;
+  box-shadow: 2px 2px 0px black;
+  transition: transform 0.1s ease;
+}
+
+.equip-btn:hover {
+  transform: scale(1.05);
+}
+    .back-btn {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      font-family: 'Press Start 2P', cursive;
+      padding: 15px 25px;
+      background-color: #ffcc00;
+      border: 4px solid #ffaa00;
+      border-radius: 10px;
+      font-size: 12px;
+      box-shadow: 4px 4px 0px black;
+      cursor: pointer;
+    }
+
+    .back-btn:hover {
+      background-color: #ffaa00;
+    }
+
+
+  </style>
+</head>
+<body>
+<div>
+  <div id="shop-container">
+    <button class="back-btn" onclick="navigateTo('MainMenu.html')">Volver</button>
+  <h1>Mis Skins</h1>
+  <div class="items" id="skins-container"></div>
+</div>
+
+<script>
+  if(!localStorage.getItem("token")){
+        navigateTo("WebMenu.html")
+  }
+
+    function navigateTo(page) {
+      window.location.href = page;
+    }
+
+  const token = localStorage.getItem("token")
+  const userId=  parseJwt(token).userId
+
+if (!userId) {
+  console.warn("No hay user_id en localStorage");
+} else {
+  fetch("http://localhost:3000/get-skins", {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ userId })
+  })
+    .then(res => res.json())
+    .then(skins => {
+      const container = document.getElementById("skins-container");
+
+      if (skins.length === 0) {
+        container.innerHTML = "<p>No tienes skins desbloqueadas.</p>";
+        return;
+      }
+
+const equippedSkinId = localStorage.getItem("equipped_skin_id");
+
+skins.forEach(skin => {
+  const div = document.createElement("div");
+  div.className = "item";
+
+  // Creamos el botón con el texto dependiendo de si está equipada
+  const isEquipped = skin.skin_id == equippedSkinId;
+
+  div.innerHTML = `
+    <img src="${skin.image_url}" alt="${skin.name}" />
+    <p>${skin.name}</p>
+    <button class="equip-btn">${isEquipped ? "Equipada" : "Equipar"}</button>
+  `;
+
+  const button = div.querySelector(".equip-btn");
+  button.addEventListener("click", () => {
+    // Guardar en localStorage
+    localStorage.setItem("equipped_skin_id", skin.skin_id);
+
+    // Cambiar todos los botones a "Equipar"
+    document.querySelectorAll(".equip-btn").forEach(btn => {
+      btn.textContent = "Equipar";
+    });
+
+    // Cambiar este botón a "Equipada"
+    button.textContent = "Equipada";
+
+    alert(`Has equipado la skin: ${skin.name}`);
+  });
+
+  container.appendChild(div);
+});
+    })
+    .catch(err => console.error("Error al cargar skins:", err));
+}
+  function parseJwt(token) {
+    try {
+      const base64Url = token.split('.')[1];
+      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+      const jsonPayload = decodeURIComponent(atob(base64).split('').map(c => {
+        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+      }).join(''));
+      return JSON.parse(jsonPayload);
+    } catch (e) {
+      return null;
+    }
+  }
+</script>
+</body>
+
+</html>

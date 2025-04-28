@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel de Administrador - Flappy Bird</title>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Press Start 2P', cursive;
+            background-color: #333366;
+            margin: 0;
+            padding: 20px;
+            color: white;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: #222244;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+        }
+
+        h1 {
+            text-align: center;
+            color: #ffcc00;
+            text-shadow: 3px 3px 0px black;
+            margin-bottom: 30px;
+        }
+
+        .user-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .user-table th {
+            background-color: #ffcc00;
+            color: #333366;
+            padding: 12px;
+            text-align: left;
+        }
+
+        .user-table td {
+            padding: 12px;
+            border-bottom: 2px solid #444477;
+        }
+
+        .user-table tr:nth-child(even) {
+            background-color: #333355;
+        }
+
+        .user-table tr:hover {
+            background-color: #444477;
+        }
+
+        button {
+            font-family: 'Press Start 2P', cursive;
+            padding: 8px 16px;
+            background-color: #ffcc00;
+            border: 3px solid #ffaa00;
+            border-radius: 5px;
+            cursor: pointer;
+            color: #333366;
+            margin: 5px;
+            box-shadow: 3px 3px 0px rgba(0, 0, 0, 0.5);
+        }
+
+        button:hover {
+            background-color: #ffaa00;
+        }
+
+        button:active {
+            transform: scale(0.95);
+        }
+
+        .logout {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+        }
+
+        .admin-badge {
+            background-color: #ff3366;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.7em;
+        }
+
+        /* Estilos para la sección de crear usuario */
+        .create-user-section {
+            background-color: #2a2a4d;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            border: 3px solid #ffaa00;
+        }
+
+        .create-user-section h2 {
+            color: #ffcc00;
+            margin-top: 0;
+            margin-bottom: 15px;
+            font-size: 20px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .form-group input[type="text"],
+        .form-group input[type="password"] {
+            padding: 10px;
+            background-color: #333;
+            border: 3px solid #ffaa00;
+            color: white;
+            border-radius: 5px;
+            font-family: 'Press Start 2P', cursive;
+            font-size: 14px;
+        }
+
+        .checkbox-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .checkbox-container input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            accent-color: #ffaa00;
+        }
+
+        .checkbox-container label {
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+<button class="logout" onclick="logout()">Cerrar Sesión</button>
+
+<div class="container">
+    <h1>PANEL DE ADMINISTRADOR</h1>
+
+    <!-- Sección para crear nuevos usuarios -->
+    <div class="create-user-section">
+        <h2>Crear Nuevo Usuario</h2>
+        <div class="form-group">
+            <input type="text" id="new-username" placeholder="Nombre de usuario">
+            <input type="password" id="new-password" placeholder="Contraseña">
+            <div class="checkbox-container">
+                <input type="checkbox" id="is-admin">
+                <label for="is-admin">¿Es administrador?</label>
+            </div>
+            <button onclick="createUser()">Crear Usuario</button>
+        </div>
+    </div>
+
+    <table class="user-table">
+        <thead>
+        <tr>
+            <th>ID</th>
+            <th>Usuario</th>
+            <th>Monedas</th>
+            <th>Puntaje</th>
+            <th>Acciones</th>
+        </tr>
+        </thead>
+        <tbody id="users-table-body">
+        <!-- Los usuarios se cargarán acá -->
+        </tbody>
+    </table>
+</div>
+
+<script>
+    // Función para cargar usuarios
+    function loadUsers() {
+        const token = localStorage.getItem('token');
+
+        fetch('http://localhost:3000/admin/users', {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
+        })
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(err => {
+                        throw new Error(err.message || 'Error desconocido');
+                    });
+                }
+                return response.json();
+            })
+            .then(users => {
+                console.log('Usuarios recibidos:', users);
+                displayUsers(users);
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert(`Error al cargar usuarios: ${error.message}`);
+            });
+    }
+
+    // Función para mostrar usuarios en la tabla
+    function displayUsers(users) {
+        const tableBody = document.getElementById('users-table-body');
+        tableBody.innerHTML = '';
+
+        users.forEach(user => {
+            const row = document.createElement('tr');
+
+            const idCell = document.createElement('td');
+            idCell.textContent = user.id;
+            row.appendChild(idCell);
+
+            const usernameCell = document.createElement('td');
+            usernameCell.textContent = user.username;
+            if (user.is_admin) {
+                const adminBadge = document.createElement('span');
+                adminBadge.className = 'admin-badge';
+                adminBadge.textContent = 'ADMIN';
+                usernameCell.appendChild(document.createTextNode(' '));
+                usernameCell.appendChild(adminBadge);
+            }
+            row.appendChild(usernameCell);
+
+            const coinsCell = document.createElement('td');
+            coinsCell.textContent = user.coins;
+            row.appendChild(coinsCell);
+
+            const scoreCell = document.createElement('td');
+            scoreCell.textContent = user.score;
+            row.appendChild(scoreCell);
+
+            const actionsCell = document.createElement('td');
+            const freezeButton = document.createElement('button');
+
+            if (user.is_admin) {
+                freezeButton.textContent = 'ADMIN';
+                freezeButton.disabled = true;
+            } else {
+                freezeButton.textContent = user.is_freezed ? 'FREEZED' : 'FREEZE';
+                freezeButton.onclick = () => toggleFreeze(user.id);
+            }
+
+            actionsCell.appendChild(freezeButton);
+            row.appendChild(actionsCell);
+
+            tableBody.appendChild(row);
+        });
+    }
+
+
+
+
+    function toggleFreeze(userId) {
+        const token = localStorage.getItem('token');
+
+        fetch('http://localhost:3000/admin/toggle-freeze', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ userId })
+        })
+            .then(response => response.json())
+            .then(data => {
+                alert(data.is_freezed ? 'Usuario freezeado' : 'Usuario desfreezado');
+                loadUsers(); // Recargar usuarios para actualizar el botón
+            })
+            .catch(err => {
+                console.error('Error al freeze/desfreeze', err);
+                alert('Error al cambiar estado de freeze');
+            });
+    }
+
+
+    // Función para crear un nuevo usuario
+    function createUser() {
+        const username = document.getElementById('new-username').value;
+        const password = document.getElementById('new-password').value;
+        const isAdmin = document.getElementById('is-admin').checked;
+
+        if (!username || !password) {
+            alert('Por favor completa todos los campos');
+            return;
+        }
+
+        const token = localStorage.getItem('token');
+
+        fetch('http://localhost:3000/admin/create-user', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({
+                username,
+                password,
+                isAdmin
+            })
+        })
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(err => {
+                        throw new Error(err.message || 'Error al crear usuario');
+                    });
+                }
+                return response.json();
+            })
+            .then(data => {
+                alert(data.message);
+                // Limpiar campos
+                document.getElementById('new-username').value = '';
+                document.getElementById('new-password').value = '';
+                document.getElementById('is-admin').checked = false;
+
+                // Recargar lista de usuarios
+                loadUsers();
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert(`Error: ${error.message}`);
+            });
+    }
+
+    // Función para cerrar sesión
+    function logout() {
+        localStorage.removeItem('token');
+        window.location.href = 'login.html';
+    }
+
+    // Inicializar al cargar la página
+    window.onload = function() {
+        const token = localStorage.getItem('token');
+        if (!token) {
+            alert('No has iniciado sesión');
+            window.location.href = 'login.html';
+            return;
+        }
+
+        loadUsers();
+    }
+</script>
+</body>
+</html>
