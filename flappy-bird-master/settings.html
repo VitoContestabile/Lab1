@@ -98,6 +98,14 @@
     </div>
 
     <script>
+
+        if(!localStorage.getItem("token")){
+            navigateTo("WebMenu.html")
+  }
+
+        function navigateTo(page) {
+            window.location.href = page;
+    }
     const soundCheckbox = document.getElementById("sound-checkbox");
     let sound = new Audio('flappybird-sound.mp3.mp3');
     sound.loop = true;

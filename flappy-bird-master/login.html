@@ -88,9 +88,19 @@
             <input type="password" id="password" placeholder="Contraseña" required>
         </div>
         <button onclick="login()">Iniciar sesión</button>
+        <button onclick="navigateTo('WebMenu.html')">Back To Menu</button>
     </div>
 
     <script>
+
+        if (localStorage.getItem("token")) {
+            navigateTo("MainMenu.html")
+    }
+        function navigateTo(page) {
+            window.location.href = page;
+    }
+
+
     // Función de login
     function login() {
     var username = document.getElementById("username").value;
@@ -109,7 +119,7 @@
     .then(response => response.json())
     .then(data => {
         if (data.message === "Login exitoso!") {
-            localStorage.setItem("user", username); // Guarda el usuario en el navegador
+            localStorage.setItem("token", data.token); // Guarda el usuario en el navegador
             window.location.href = "MainMenu.html";
         } else {
             alert(data.message);

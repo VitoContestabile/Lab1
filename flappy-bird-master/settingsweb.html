@@ -98,6 +98,14 @@
     </div>
 
     <script>
+
+        if (localStorage.getItem("token")) {
+            navigateTo("MainMenu.html")
+    }
+        function navigateTo(page) {
+            window.location.href = page;
+    }
+
         const soundCheckbox = document.getElementById("sound-checkbox");
 
         // Crear un objeto de audio para el sonido de Flappy Bird

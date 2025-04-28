@@ -1,10 +1,12 @@
 const express = require('express');
+const jwt = require('jsonwebtoken');
 const { Client } = require('pg'); // Usamos el cliente de PostgreSQL
 const bodyParser = require('body-parser');
 const cors = require('cors');
 
 // Crear la aplicación Express
 const app = express();
+const SECRET = 'clave';
 const port = 3000;
 
 // Middleware
@@ -16,7 +18,7 @@ const client = new Client({
   user: 'postgres',           // Usuario de la base de datos
   host: 'localhost',             // Dirección del servidor PostgreSQL
   database: 'FlappyDB',       // Nombre de la base de datos
-  password: 'Unlion2005',     // Contraseña del usuario
+  password: 'Vitoman1',     // Contraseña del usuario
   port: 5432,                    // Puerto de PostgreSQL
 });
 
@@ -29,13 +31,16 @@ client.connect((err) => {
   }
 });
 
+
 // Crear la tabla de usuarios si no existe
 client.query(`
   CREATE TABLE IF NOT EXISTS users (
     id SERIAL PRIMARY KEY,
     username VARCHAR(255) UNIQUE NOT NULL,
     password VARCHAR(255) NOT NULL,
-    score INT DEFAULT 0  -- Agregar el campo score
+    coins INT DEFAULT 0,
+    score INT DEFAULT 0,
+    is_admin BOOLEAN DEFAULT FALSE-- Agregar el campo score
   )
 `, (err, res) => {
   if (err) {
@@ -45,37 +50,96 @@ client.query(`
   }
 });
 
-// Crear la tabla de amigos si no existe
+
+
+//shop------------------------------------------------
+
 client.query(`
-  CREATE TABLE IF NOT EXISTS amigos (
-    user_id INT REFERENCES users(id) ON DELETE CASCADE,  -- Clave foránea a users
-    friend_id INT REFERENCES users(id) ON DELETE CASCADE,  -- Clave foránea a users
-    PRIMARY KEY (user_id, friend_id),  -- Relación muchos a muchos
-    CONSTRAINT no_self_friend CHECK (user_id != friend_id)  -- No permitir que un usuario sea su propio amigo
-  )
+  CREATE TABLE IF NOT EXISTS skins (
+    skin_id SERIAL PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    image_url TEXT NOT NULL,
+    price INT NOT NULL,
+    rarity VARCHAR(50) CHECK (rarity IN ('común', 'raro', 'épico', 'legendario'))
+      );
 `, (err, res) => {
   if (err) {
-    console.error('Error al crear la tabla de amigos', err);
+    console.error('Error al crear la tabla de skins', err);
   } else {
-    console.log('Tabla de amigos creada o ya existe');
+    console.log('Tabla de solicitudes de skins o ya existe');
   }
 });
 
-// Crear la tabla de solicitudes de amistad si no existe
+//Crear la tabla de las skins q tiene cada user
+
 client.query(`
-  CREATE TABLE IF NOT EXISTS friend_requests (
-    user_id INT REFERENCES users(id) ON DELETE CASCADE,
-    friend_id INT REFERENCES users(id) ON DELETE CASCADE,
-    PRIMARY KEY (user_id, friend_id),
-    CONSTRAINT no_self_request CHECK (user_id != friend_id)
-  )
+  CREATE TABLE IF NOT EXISTS skins_user (
+    skin_id INTEGER,
+    user_id INTEGER,
+    PRIMARY KEY (skin_id, user_id),
+    FOREIGN KEY (skin_id) REFERENCES skins(skin_id),
+    FOREIGN KEY (user_id) REFERENCES users(id)
+  );
 `, (err, res) => {
   if (err) {
-    console.error('Error al crear la tabla de solicitudes de amistad', err);
+    console.error('❌ Error al crear la tabla skins_user:', err);
   } else {
-    console.log('Tabla de solicitudes de amistad creada o ya existe');
+    console.log('✅ Tabla skins_user creada o ya existe');
   }
 });
+// insertar skins
+
+const insertSkin = async (name, imageUrl, price, rarity) => {
+  try {
+    // Primero buscamos si ya existe una skin con ese nombre
+    const existing = await client.query('SELECT * FROM skins WHERE name = $1', [name]);
+
+    if (existing.rows.length > 0) {
+      console.log(`❌ La skin "${name}" ya existe.`);
+      return;
+    }
+
+    // Si no existe, la insertamos
+    const res = await client.query(
+      'INSERT INTO skins (name, image_url, price, rarity) VALUES ($1, $2, $3, $4) RETURNING *',
+      [name, imageUrl, price, rarity]
+    );
+
+    console.log('✅ Skin insertada:', res.rows[0]);
+  } catch (err) {
+    console.error('⚠️ Error al insertar skin:', err);
+  }
+};
+
+client.query(`
+  CREATE TABLE IF NOT EXISTS friends (
+    user1_id INT REFERENCES users(id) ON DELETE CASCADE,
+    user2_id INT REFERENCES users(id) ON DELETE CASCADE,
+    PRIMARY KEY (user1_id, user2_id),
+    CHECK (user1_id < user2_id)
+)
+`, (err) => {
+  if (err) console.error('Error al crear la tabla amigos', err);
+  else console.log('Tabla de amigos creada o ya existe');
+});
+
+client.query(`
+  CREATE TABLE IF NOT EXISTS friend_requests (
+    sender_id INT REFERENCES users(id) ON DELETE CASCADE,
+    receiver_id INT REFERENCES users(id) ON DELETE CASCADE,
+    PRIMARY KEY (sender_id, receiver_id),
+    CONSTRAINT no_self_request CHECK (sender_id != receiver_id)
+)
+`, (err) => {
+  if (err) console.error('Error al crear la tabla solicitudes', err);
+  else console.log('Tabla de solicitudes creada o ya existe');
+});
+
+insertSkin("normal", "./flappybird.png", 0, "común")
+insertSkin("Arturo", "./arturo.png", 0, "raro")
+insertSkin("Jtorres", "./jtorres.png", 0, "raro")
+
+//shop ----------------------------------------------------------------------------
 
 // Ruta para registrar usuarios
 app.post('/register', (req, res) => {
@@ -114,206 +178,18 @@ app.post('/login', (req, res) => {
   }
 
   // Verificar si el usuario existe y si la contraseña es correcta
-  client.query('SELECT * FROM users WHERE username = $1 AND password = $2', [username, password], (err, result) => {
+  client.query('SELECT id FROM users WHERE username = $1 AND password = $2', [username, password], (err, result) => {
     if (err) {
       return res.status(500).json({ message: 'Error al verificar el usuario', error: err });
     }
 
     if (result.rows.length > 0) {
-      return res.json({ message: 'Login exitoso!' });  // Respuesta de login exitoso
+      const userId = result.rows[0].id;
+      const token = jwt.sign({ userId }, SECRET, { expiresIn: '1h' });
+      return res.json({ message: 'Login exitoso!', token:token}); // Lo envía en la respuesta
     } else {
       return res.status(400).json({ message: 'Usuario o contraseña incorrectos.' });
     }
-  });
-});
-
-// Ruta para agregar un amigo
-app.post('/add-friend', (req, res) => {
-  const { userId, friendId } = req.body;
-
-  if (!userId || !friendId) {
-    return res.status(400).json({ message: 'Por favor ingresa ambos IDs.' });
-  }
-
-  // Verificar si ambos usuarios existen
-  client.query('SELECT * FROM users WHERE id = $1 OR id = $2', [userId, friendId], (err, result) => {
-    if (err) {
-      return res.status(500).json({ message: 'Error al verificar los usuarios', error: err });
-    }
-
-    if (result.rows.length < 2) {
-      return res.status(400).json({ message: 'Uno de los usuarios no existe.' });
-    }
-
-    // Verificar si ya son amigos
-    client.query('SELECT * FROM amigos WHERE user_id = $1 AND friend_id = $2', [userId, friendId], (err, result) => {
-      if (err) {
-        return res.status(500).json({ message: 'Error al verificar la amistad', error: err });
-      }
-
-      if (result.rows.length > 0) {
-        return res.status(400).json({ message: 'Ya eres amigo de este usuario.' });
-      }
-
-      // Agregar la relación de amistad
-      client.query('INSERT INTO amigos (user_id, friend_id) VALUES ($1, $2), ($2, $1)', [userId, friendId], (err, result) => {
-        if (err) {
-          return res.status(500).json({ message: 'Error al agregar amigo', error: err });
-        }
-        res.status(200).json({ message: 'Amigo agregado con éxito.' });
-      });
-    });
-  });
-});
-
-// Ruta para obtener los amigos de un usuario
-app.get('/friends', (req, res) => {
-  const userId = 1;  // Ejemplo de ID de usuario (esto debería ser dinámico, por ejemplo, desde una sesión)
-  client.query('SELECT u.id, u.username FROM users u JOIN amigos a ON u.id = a.friend_id WHERE a.user_id = $1', [userId], (err, result) => {
-    if (err) {
-      return res.status(500).json({ message: 'Error al obtener los amigos', error: err });
-    }
-    res.json(result.rows);  // Enviar lista de amigos
-  });
-});
-
-// Ruta para eliminar un amigo
-app.delete('/delete-friend/:friendId', (req, res) => {
-  const userId = 1;  // Ejemplo de ID de usuario (esto debería ser dinámico, por ejemplo, desde una sesión)
-  const { friendId } = req.params;
-
-  // Eliminar la relación de amistad
-  client.query('DELETE FROM amigos WHERE user_id = $1 AND friend_id = $2', [userId, friendId], (err, result) => {
-    if (err) {
-      return res.status(500).json({ message: 'Error al eliminar amigo', error: err });
-    }
-    res.status(200).json({ message: 'Amigo eliminado con éxito.' });
-  });
-});
-
-// Ruta para enviar una solicitud de amistad
-// Ruta para enviar una solicitud de amistad
-app.post('/send-friend-request', (req, res) => {
-  const { userId, friendId } = req.body;
-
-  // Primero, verificar si el usuario de destino existe
-  client.query('SELECT * FROM users WHERE id = $1', [friendId], (err, userResult) => {
-    if (err) {
-      return res.status(500).json({ success: false, message: 'Error al verificar el usuario', error: err });
-    }
-
-    // Si el usuario no existe
-    if (userResult.rows.length === 0) {
-      return res.status(404).json({ success: false, message: 'El usuario no existe.' });
-    }
-
-    // Verificar si ya son amigos
-    client.query('SELECT * FROM amigos WHERE (user_id = $1 AND friend_id = $2) OR (user_id = $2 AND friend_id = $1)', [userId, friendId], (err, friendResult) => {
-      if (err) {
-        return res.status(500).json({ success: false, message: 'Error al verificar la amistad', error: err });
-      }
-
-      if (friendResult.rows.length > 0) {
-        return res.status(400).json({ success: false, message: 'Ya eres amigo de este usuario.' });
-      }
-
-      // Verificar si ya existe una solicitud pendiente
-      client.query('SELECT * FROM friend_requests WHERE (user_id = $1 AND friend_id = $2) OR (user_id = $2 AND friend_id = $1)', [userId, friendId], (err, requestResult) => {
-        if (err) {
-          return res.status(500).json({ success: false, message: 'Error al verificar solicitudes previas', error: err });
-        }
-
-        if (requestResult.rows.length > 0) {
-          // Si ya existe una solicitud pendiente, responder con un mensaje adecuado
-          return res.status(400).json({ success: false, message: 'Ya has enviado una solicitud de amistad a este usuario o viceversa.' });
-        }
-
-        // Si no existe una solicitud previa, insertar la nueva solicitud
-        client.query('INSERT INTO friend_requests (user_id, friend_id) VALUES ($1, $2)', [userId, friendId], (err, result) => {
-          if (err) {
-            return res.status(500).json({ success: false, message: 'Error al enviar la solicitud.' });
-          }
-          return res.status(200).json({ success: true, message: 'Solicitud enviada con éxito.' });
-        });
-      });
-    });
-  });
-});
-
-// Ruta para obtener las solicitudes de amistad pendientes
-app.get('/get-friend-requests', (req, res) => {
-   // Este ID debería venir de la sesión/autenticación del usuario
-
-  client.query(`
-    SELECT u.id, u.username 
-    FROM users u
-    JOIN friend_requests fr ON u.id = fr.user_id
-    WHERE fr.friend_id = $1
-  `, [userId], (err, result) => {
-    if (err) {
-      return res.status(500).json({ message: 'Error al obtener las solicitudes', error: err });
-    }
-
-    // Asegurar que result y result.rows existan antes de enviarlos
-    res.json(result?.rows ?? []);
-  });
-});
-
-
-// Ruta para enviar una solicitud de amistad
-app.post('/send-friend-request', (req, res) => {
-  const { userId, friendId } = req.body;
-
-  // Primero, verificar si el usuario de destino existe
-  client.query('SELECT * FROM users WHERE id = $1', [friendId], (err, userResult) => {
-    if (err) {
-      return res.status(500).json({ success: false, message: 'Error al verificar el usuario', error: err });
-    }
-
-    // Si el usuario no existe
-    if (userResult.rows.length === 0) {
-      return res.status(404).json({ success: false, message: 'El usuario no existe.' });
-    }
-
-    // Verificar si ya son amigos
-    client.query('SELECT * FROM amigos WHERE (user_id = $1 AND friend_id = $2) OR (user_id = $2 AND friend_id = $1)', [userId, friendId], (err, friendResult) => {
-      if (err) {
-        return res.status(500).json({ success: false, message: 'Error al verificar la amistad', error: err });
-      }
-
-      if (friendResult.rows.length > 0) {
-        return res.status(400).json({ success: false, message: 'Ya eres amigo de este usuario.' });
-      }
-
-      // Verificar si ya existe una solicitud pendiente en cualquier dirección
-      client.query(`
-        SELECT * FROM friend_requests 
-        WHERE (user_id = $1 AND friend_id = $2) OR 
-              (user_id = $2 AND friend_id = $1)
-      `, [userId, friendId], (err, requestResult) => {
-        if (err) {
-          return res.status(500).json({ success: false, message: 'Error al verificar solicitudes previas', error: err });
-        }
-
-        if (requestResult.rows.length > 0) {
-          // Si ya existe una solicitud pendiente, responder con un mensaje específico
-          return res.status(400).json({
-            success: false,
-            message: requestResult.rows[0].user_id === userId
-              ? 'Ya has enviado una solicitud de amistad a este usuario.'
-              : 'Este usuario ya te ha enviado una solicitud de amistad.'
-          });
-        }
-
-        // Si no existe una solicitud previa, insertar la nueva solicitud
-        client.query('INSERT INTO friend_requests (user_id, friend_id) VALUES ($1, $2)', [userId, friendId], (err, result) => {
-          if (err) {
-            return res.status(500).json({ success: false, message: 'Error al enviar la solicitud.' });
-          }
-          return res.status(200).json({ success: true, message: 'Solicitud enviada con éxito.' });
-        });
-      });
-    });
   });
 });
 
@@ -321,3 +197,233 @@ app.post('/send-friend-request', (req, res) => {
 app.listen(port, () => {
   console.log(`Servidor escuchando en el puerto ${port}`);
 });
+
+// tomar skins
+app.post("/get-skins", async (req, res) => {
+  const { userId } = req.body;
+
+  try {
+    const result = await client.query(
+      "SELECT * FROM skins NATURAL JOIN skins_user WHERE user_id = $1",
+      [userId]
+    );
+    res.json(result.rows);
+  } catch (err) {
+    console.error("Error al obtener skins:", err);
+    res.status(500).json({ error: "Error interno al obtener skins" });
+  }
+});
+
+
+// comprar una skin
+
+app.post('/comprar-skin', async (req, res) => {
+  const { skinId, userId } = req.body;
+
+  try {
+    const { rows: skinYaLaTiene } = await client.query(
+      'SELECT * FROM skins_user WHERE user_id = $1 AND skin_id = $2',
+      [userId, skinId]
+    );
+
+    if (skinYaLaTiene.length > 0) {
+      return res.json({ success: false, message: 'Ya tienes esta skin' });
+    }
+
+    const { rows: userCoins } = await client.query(
+      'SELECT coins FROM users WHERE id = $1',
+      [userId]
+    );
+
+    const { rows: skin } = await client.query(
+      'SELECT price FROM skins WHERE skin_id = $1',
+      [skinId]
+    );
+
+    if (userCoins[0].coins < skin[0].price) {
+      return res.json({ success: false, message: 'No tienes suficientes monedas' });
+    }
+
+    await client.query('BEGIN');
+
+    await client.query(
+      'UPDATE users SET coins = coins - $1 WHERE id = $2',
+      [skin[0].price, userId]
+    );
+
+    await client.query(
+      'INSERT INTO skins_user (user_id, skin_id) VALUES ($1, $2)',
+      [userId, skinId]
+    );
+
+    await client.query('COMMIT');
+    res.json({ success: true, message: 'Skin comprada con éxito' });
+  } catch (err) {
+    await client.query('ROLLBACK');
+    console.error(err);
+    res.json({ success: false, message: 'Error en la compra' });
+  }
+});
+
+app.post('/friends', (req, res) => {
+  const { userId } = req.body;
+
+  if (!userId) {
+    return res.status(400).json({ message: 'Se requiere el ID de usuario' });
+  }
+
+  client.query(`
+    SELECT u.username
+    FROM users u
+           JOIN friends f ON
+      (f.user1_id = $1 AND f.user2_id = u.id) OR
+      (f.user2_id = $1 AND f.user1_id = u.id)
+  `, [userId], (err, result) => {
+    if (err) return res.status(500).json({ message: 'Error al obtener los amigos', error: err });
+
+    const friendUsernames = result.rows.map(row => row.username);
+    res.status(200).json({ friends: friendUsernames });
+  });
+});
+
+app.post('/send-friend-request', (req, res) => {
+  const { senderId, receiverId } = req.body;
+
+  if (!senderId || !receiverId) {
+    return res.status(400).json({ message: 'Se requieren senderId y receiverId' });
+  }
+
+  if (senderId === receiverId) {
+    return res.status(400).json({ message: 'No podés mandarte solicitud a vos mismo' });
+  }
+
+  // 1. Verificamos si ya son amigos
+  const [user1, user2] = senderId < receiverId ? [senderId, receiverId] : [receiverId, senderId];
+  client.query(`
+    SELECT * FROM friends WHERE user1_id = $1 AND user2_id = $2
+  `, [user1, user2], (err, friendResult) => {
+    if (err) return res.status(500).json({ message: 'Error al verificar amistad', error: err });
+
+    if (friendResult.rows.length > 0) {
+      return res.status(409).json({ message: 'Ya son amigos' });
+    }
+
+    // 2. Verificamos si ya existe una solicitud en ambos sentidos
+    client.query(`
+      SELECT * FROM friend_requests
+      WHERE (sender_id = $1 AND receiver_id = $2) OR (sender_id = $2 AND receiver_id = $1)
+    `, [senderId, receiverId], (err2, requestResult) => {
+      if (err2) return res.status(500).json({ message: 'Error al verificar solicitudes existentes', error: err2 });
+
+      if (requestResult.rows.length > 0) {
+        return res.status(409).json({ message: 'Ya hay una solicitud pendiente entre estos usuarios' });
+      }
+
+      // 3. Insertamos la solicitud
+      client.query(`
+        INSERT INTO friend_requests (sender_id, receiver_id)
+        VALUES ($1, $2)
+      `, [senderId, receiverId], (err3) => {
+        if (err3) return res.status(500).json({ message: 'Error al enviar solicitud', error: err3 });
+
+        res.status(200).json({ message: 'Solicitud de amistad enviada exitosamente' });
+      });
+    });
+  });
+});
+app.post('/get-user-id', (req, res) => {
+  const { username } = req.body;
+
+  if (!username) return res.status(400).json({ message: 'Falta el nombre de usuario' });
+
+  client.query('SELECT id FROM users WHERE username = $1', [username], (err, result) => {
+    if (err) return res.status(500).json({ message: 'Error al buscar el usuario', error: err });
+
+    if (result.rows.length > 0) {
+      res.status(200).json({ userId: result.rows[0].id });
+    } else {
+      res.status(404).json({ message: 'Usuario no encontrado' });
+    }
+  });
+});
+
+app.post('/friend-requests', (req, res) => {
+  const { userId } = req.body;
+
+  if (!userId) {
+    return res.status(400).json({ message: 'Se requiere el ID del usuario' });
+  }
+
+  client.query(`
+    SELECT u.username
+    FROM friend_requests fr
+           JOIN users u ON u.id = fr.sender_id
+    WHERE fr.receiver_id = $1
+  `, [userId], (err, result) => {
+    if (err) return res.status(500).json({ message: 'Error al obtener solicitudes', error: err });
+
+    const requestUsernames = result.rows.map(row => row.username);
+    res.status(200).json({ requests: requestUsernames });
+  });
+});
+app.post('/accept-friend-request', (req, res) => {
+  const { senderId, receiverId } = req.body;
+
+  if (!senderId || !receiverId) {
+    return res.status(400).json({ message: 'Se requieren senderId y receiverId' });
+  }
+
+  // Insertamos la amistad (en orden ascendente para cumplir con el CHECK)
+  const [user1, user2] = senderId < receiverId ? [senderId, receiverId] : [receiverId, senderId];
+
+  client.query(`
+    INSERT INTO friends (user1_id, user2_id)
+    VALUES ($1, $2)
+    ON CONFLICT DO NOTHING
+  `, [user1, user2], (err) => {
+    if (err) return res.status(500).json({ message: 'Error al aceptar la solicitud', error: err });
+
+    // Eliminamos la solicitud
+    client.query(`
+      DELETE FROM friend_requests
+      WHERE sender_id = $1 AND receiver_id = $2
+    `, [senderId, receiverId], (err2) => {
+      if (err2) return res.status(500).json({ message: 'Error al eliminar la solicitud', error: err2 });
+
+      res.status(200).json({ message: 'Solicitud aceptada con éxito' });
+    });
+  });
+});
+app.post('/reject-friend-request', (req, res) => {
+  const { senderId, receiverId } = req.body;
+
+  if (!senderId || !receiverId) {
+    return res.status(400).json({ message: 'Se requieren senderId y receiverId' });
+  }
+
+  client.query(`
+    DELETE FROM friend_requests
+    WHERE sender_id = $1 AND receiver_id = $2
+  `, [senderId, receiverId], (err) => {
+    if (err) return res.status(500).json({ message: 'Error al rechazar la solicitud', error: err });
+
+    res.status(200).json({ message: 'Solicitud rechazada con éxito' });
+  });
+});
+
+app.post('/get-user-data', async (req, res) => {
+  const { userId } = req.body;
+
+  if (!userId) return res.status(400).json({ message: `Falta el userId ${userId}` });
+
+  client.query('SELECT * FROM users WHERE id = $1', [userId], (err, result) => {
+    if (err) return res.status(500).json({ message: 'Error al buscar el usuario', error: err });
+
+    if (result.rows.length > 0) {
+      res.status(200).json({ userId: result.rows[0].id, username: result.rows[0].username });
+    } else {
+      res.status(404).json({ message: 'Usuario no encontrado' });
+    }
+  });
+});
+

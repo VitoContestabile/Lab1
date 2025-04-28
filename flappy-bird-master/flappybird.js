@@ -32,7 +32,7 @@ let board, ctx;
 let boardWidth = 360, boardHeight = 640;
 
 // Bird
-let bird = { x: 0, y: 0, width: 34, height: 24 }; // x e y se actualizarán en startGame()
+let bird = { x: 0, y: 0, width: 45, height: 45 }; // x e y se actualizarán en startGame()
 let velocityY = 0;
 let gravity = 0.23;  // Ajusta la caída del pájaro
 
@@ -45,7 +45,7 @@ let openingSpace = 250;
 
 // Imágenes
 let birdImg = new Image(), topPipeImg = new Image(), bottomPipeImg = new Image();
-birdImg.src = "./flappybird.png";
+birdImg.src = localStorage.getItem("equiped_skin_img");
 topPipeImg.src = "./toppipe.png";
 bottomPipeImg.src = "./bottompipe.png";
 
@@ -70,7 +70,7 @@ function startGame() {
     pipeArray = [];
     score = 0;
     gameOver = false;
-    velocityX = -1;  // Velocidad más lenta
+    velocityX = -10;  // Velocidad más lenta
     pipeX = boardWidth; // Las tuberías salen desde el borde derecho
 
     // Se agrega el listener para mover el pájaro

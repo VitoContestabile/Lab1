@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Solicitudes de Amistad</title>
+    <style>
+        body {
+            font-family: 'Press Start 2P', cursive;
+            background-color: skyblue;
+            margin: 0;
+            text-align: center;
+            overflow: hidden;
+        }
+
+        #friend-requests-container {
+            position: absolute;
+            width: 100%;
+            height: 100vh;
+            background: url("./flappybirdbg.png") no-repeat center center;
+            background-size: cover;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        h1 {
+            font-size: 28px;
+            color: white;
+            text-shadow: 4px 4px 0px black;
+            margin-bottom: 20px;
+        }
+
+        ul {
+            list-style: none;
+            padding: 0;
+            color: white;
+        }
+
+        li {
+            background-color: rgba(0, 0, 0, 0.6);
+            border: 2px solid #ffaa00;
+            padding: 10px 20px;
+            margin: 10px;
+            border-radius: 10px;
+            font-size: 16px;
+            text-shadow: 2px 2px 0px black;
+        }
+
+        button {
+            margin-top: 20px;
+            font-size: 16px;
+            font-family: 'Press Start 2P', cursive;
+            padding: 10px 20px;
+            background-color: #ffcc00;
+            border: 4px solid #ffaa00;
+            border-radius: 10px;
+            cursor: pointer;
+            box-shadow: 4px 4px 0px rgba(0, 0, 0, 0.98);
+            transition: transform 0.1s ease;
+        }
+
+        button:hover {
+            background-color: #ffaa00;
+            transform: scale(1.05);
+        }
+
+        button:active {
+            transform: scale(0.95);
+        }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+</head>
+<body>
+<div id="friend-requests-container">
+    <h1>Solicitudes de Amistad</h1>
+    <ul id="requestList">
+        <li>Cargando...</li>
+    </ul>
+    <button onclick="location.href='friends.html'">Volver al Menú</button>
+</div>
+
+<script>
+    if(!localStorage.getItem("token")){
+        navigateTo("WebMenu.html")
+  }
+
+    function navigateTo(page) {
+      window.location.href = page;
+    }
+    const token = localStorage.getItem("token")
+    const userId = parseJwt(token).userId
+
+    fetch('http://localhost:3000/friend-requests', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId })
+    })
+        .then(response => response.json())
+        .then(data => {
+            const list = document.getElementById("requestList");
+            list.innerHTML = ""; // Limpiar
+
+            if (data.requests.length === 0) {
+                list.innerHTML = "<li>No tenés solicitudes pendientes.</li>";
+            } else {
+                data.requests.forEach(username => {
+                    const li = document.createElement("li");
+                    li.innerHTML = `
+                ${username}<br/>
+                <button onclick="responderSolicitud('${username}', true)">Aceptar</button>
+                <button onclick="responderSolicitud('${username}', false)">Rechazar</button>
+            `;
+                    list.appendChild(li);
+                });
+            }
+        })
+        .catch(err => {
+            console.error("Error:", err);
+            document.getElementById("requestList").innerHTML = "<li>Error al cargar solicitudes.</li>";
+        });
+
+    function responderSolicitud(username, aceptar) {
+        fetch("http://localhost:3000/get-user-id", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ username })
+        })
+            .then(res => res.json())
+            .then(data => {
+                if (!data.userId) {
+                    alert("No se pudo encontrar el usuario.");
+                    return;
+                }
+
+                const senderId = data.userId;
+                const url = aceptar
+                    ? 'http://localhost:3000/accept-friend-request'
+                    : 'http://localhost:3000/reject-friend-request';
+
+                return fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ senderId, receiverId: userId })
+                });
+            })
+            .then(res => res.json())
+            .then(result => {
+                alert(result.message);
+                location.reload(); // Recarga la lista
+            })
+            .catch(err => {
+                console.error("Error:", err);
+                alert("Ocurrió un error al procesar la solicitud.");
+            });
+    }
+            function parseJwt(token) {
+                    try {
+                        const base64Url = token.split('.')[1];
+                        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+                        const jsonPayload = decodeURIComponent(atob(base64).split('').map(c => {
+                            return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+                        }).join(''));
+                        return JSON.parse(jsonPayload);
+                    } catch (e) {
+                        return null;
+                    }
+        }
+
+</script>
+</body>
+</html>

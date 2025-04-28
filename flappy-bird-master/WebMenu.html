@@ -73,6 +73,10 @@
     </div>
 
     <script>
+            if (localStorage.getItem("token")) {
+        navigateTo("MainMenu.html")
+    }
+
         function navigateTo(page) {
             window.location.href = page;
         }
