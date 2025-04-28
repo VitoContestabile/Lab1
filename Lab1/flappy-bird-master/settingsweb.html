@@ -19,7 +19,7 @@
             position: absolute;
             width: 100%;
             height: 100vh;
-            background: url("../assets/image/flappybirdbg.png") no-repeat center center;
+            background: url("flappybirdbg.png") no-repeat center center;
             background-size: cover;
             display: flex;
             flex-direction: column;
@@ -94,61 +94,51 @@
         <label>
             <input type="checkbox" id="sound-checkbox"> Sonido activado
         </label>
-        <button onclick="location.href='MainMenu.html'">Volver al menú</button>
+        <button onclick="location.href='WebMenu.html'">Volver al menú</button>
     </div>
 
     <script>
 
-        if(!localStorage.getItem("token")){
-            navigateTo("WebMenu.html")
-  }
-
+        if (localStorage.getItem("token")) {
+            navigateTo("MainMenu.html")
+    }
         function navigateTo(page) {
             window.location.href = page;
     }
-    const soundCheckbox = document.getElementById("sound-checkbox");
-    let sound = new Audio('flappybird-sound.mp3.mp3');
-    sound.loop = true;
 
-    // Verificar si el sonido estaba activado antes
-    if (localStorage.getItem("soundEnabled") === "true") {
-        soundCheckbox.checked = true;
-        if (!window.soundPlaying) {
-            sound.play();
-            window.soundPlaying = true;
+        const soundCheckbox = document.getElementById("sound-checkbox");
+
+        // Crear un objeto de audio para el sonido de Flappy Bird
+        const sound = new Audio('flappybird-sound.mp3'); // Ruta a tu archivo de sonido
+
+        // Controlar el estado del sonido
+        let isSoundEnabled = false; // Inicialmente, el sonido está desactivado
+
+        // Función para activar o desactivar el sonido
+        function toggleSound() {
+            if (soundCheckbox.checked) {
+                if (!isSoundEnabled) {
+                    sound.loop = true;  // Reproducir el sonido en loop
+                    sound.play();
+                    isSoundEnabled = true;
+                }
+            } else {
+                sound.pause();
+                sound.currentTime = 0; // Reiniciar el sonido
+                isSoundEnabled = false;
+            }
         }
-    }
 
-    function toggleSound() {
-        if (soundCheckbox.checked) {
-            sound.play();
-            window.soundPlaying = true;
-            localStorage.setItem("soundEnabled", "true");
-        } else {
-            sound.pause();
-            localStorage.setItem("soundEnabled", "false");
-        }
-    }
+        // Añadir un evento para cambiar el estado del sonido
+        soundCheckbox.addEventListener("change", toggleSound);
 
-    soundCheckbox.addEventListener("change", toggleSound);
-</script>
-<script>
-    const soundCheckbox = document.getElementById("sound-checkbox");
-
-    // Cargar el estado del sonido
-    if (localStorage.getItem("soundEnabled") === "true") {
-        soundCheckbox.checked = true;
-    }
-
-    soundCheckbox.addEventListener("change", function () {
-        if (this.checked) {
-            window.soundManager.play();
-        } else {
-            window.soundManager.pause();
-        }
-    });
-</script>
-
-
+        // Asegurarse de que el sonido esté desactivado cuando se cargue la página si el checkbox está desmarcado
+        window.onload = () => {
+            if (soundCheckbox.checked) {
+                sound.play();
+                isSoundEnabled = true;
+            }
+        };
+    </script>
 </body>
 </html>

@@ -1,4 +1,3 @@
-
 document.addEventListener("DOMContentLoaded", () => {
     const startButton = document.getElementById("start-button");
     const startScreen = document.getElementById("start-screen");
@@ -46,8 +45,8 @@ let openingSpace = 250;
 
 // Imágenes
 let birdImg = new Image(), topPipeImg = new Image(), bottomPipeImg = new Image();
-birdImg.src = ".flappybird.png";
-topPipeImg.src = ".toppipe.png";
+birdImg.src = "./flappybird.png";
+topPipeImg.src = "./toppipe.png";
 bottomPipeImg.src = "./bottompipe.png";
 
 // Juego
@@ -167,7 +166,7 @@ function moveBird(e) {
 
 function detectCollision(a, b) {
     return a.x < b.x + b.width &&
-           a.x + a.width > b.x &&
-           a.y < b.y + b.height &&
-           a.y + a.height > b.y;
+        a.x + a.width > b.x &&
+        a.y < b.y + b.height &&
+        a.y + a.height > b.y;
 }

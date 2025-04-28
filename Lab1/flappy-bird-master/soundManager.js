@@ -1,5 +1,5 @@
 import * as express from "express";
-import app from "./app";
+import app from "./server/app";
 
 app.use(express.static('public'));// soundManager.js
 (function () {
