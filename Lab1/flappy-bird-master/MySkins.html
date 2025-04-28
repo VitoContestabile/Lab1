@@ -160,6 +160,7 @@ skins.forEach(skin => {
   button.addEventListener("click", () => {
     // Guardar en localStorage
     localStorage.setItem("equipped_skin_id", skin.skin_id);
+    localStorage.setItem("equipped_skin_img",skin.image_url)
 
     // Cambiar todos los botones a "Equipar"
     document.querySelectorAll(".equip-btn").forEach(btn => {

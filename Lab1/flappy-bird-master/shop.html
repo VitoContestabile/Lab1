@@ -16,7 +16,7 @@
 
     #shop-container {
       min-height: 100vh;
-      background: url("flappybirdbg.png") no-repeat center center;
+      background: url("./flappybirdbg.png") no-repeat center center;
       background-size: cover;
       display: flex;
       flex-direction: column;
@@ -123,30 +123,29 @@
   </style>
 </head>
 <body>
-  <div id="shop-container">
-    <button class="back-btn" onclick="navigateTo('MainMenu.html')">Volver</button>
-    <button class="toSkins-btn" onclick="navigateTo('MySkins.html')">Mis Skins</button>
-    <h1>Tienda de Skins</h1>
-    <div class="items">
-      <div class="item">
-        <p>Skin Clásica</p>
-        <img src="../assets/image/flappybird.png" alt="Skin 1" />
-        <p>Price: 0 coins</p>
-        <button class="buy-btn" onclick="comprarSkin(1, getUserId())">Comprar</button>
-      </div>
+<div id="shop-container">
+  <button class="back-btn" onclick="navigateTo('MainMenu.html')">Volver</button>
+  <button class="toSkins-btn" onclick="navigateTo('MySkins.html')">Mis Skins</button>
+  <h1>Tienda de Skins</h1>
+  <div class="items">
+    <div class="item">
+      <p>Skin Clásica</p>
+      <img src="./flappybird.png" alt="Skin 1" />
+      <p>Price: 0 coins</p>
+      <button class="buy-btn" onclick="comprarSkin(1, getUserId())">Comprar</button>
     </div>
-      <div class="item">
-        <p>Arturo</p>
-        <img src="../../arturo.png" alt="Skin 2" />
-        <p>Price: 0 coins</p>
-        <button class="buy-btn" onclick="comprarSkin(2, getUserId())" >Comprar</button>
-      </div>
-      <div class="item">
-        <p>Jtorres</p>
-        <img src="../assets/image/jtorres.png" alt="Skin 3" />
-        <p>Price: 0 coins</p>
-        <button class="buy-btn" onclick="comprarSkin(3, getUserId())">Comprar</button>
-      </div>
+    <div class="item">
+      <p>Arturo</p>
+      <img src="./arturo.png" alt="Skin 2" />
+      <p>Price: 0 coins</p>
+      <button class="buy-btn" onclick="comprarSkin(2, getUserId())" >Comprar</button>
+    </div>
+    <div class="item">
+      <p>Jtorres</p>
+      <img src="./jtorres.png" alt="Skin 3" />
+      <p>Price: 0 coins</p>
+      <button class="buy-btn" onclick="comprarSkin(3, getUserId())">Comprar</button>
+    </div>
 
   </div>
 
@@ -158,8 +157,8 @@
     }
 
     if(!localStorage.getItem("token")){
-        navigateTo("WebMenu.html")
-  }
+      navigateTo("WebMenu.html")
+    }
     function navigateTo(page) {
       window.location.href = page;
     }
@@ -169,18 +168,18 @@
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
-          },
+        },
         body: JSON.stringify({ skinId, userId })
       })
-      .then(res => res.json())
-      .then(data => {
-        alert(data.message);
-      })
-      .catch(err => {
-        alert("Error al comprar la skin");
-        console.error(err);
-      });
-  }
+              .then(res => res.json())
+              .then(data => {
+                alert(data.message);
+              })
+              .catch(err => {
+                alert("Error al comprar la skin");
+                console.error(err);
+              });
+    }
     function parseJwt(token) {
       try {
         const base64Url = token.split('.')[1];
@@ -194,5 +193,6 @@
       }
     }
   </script>
+</div>
 </body>
 </html>
