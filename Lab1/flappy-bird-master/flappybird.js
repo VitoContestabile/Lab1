@@ -45,7 +45,11 @@ let openingSpace = 250;
 
 // Imágenes
 let birdImg = new Image(), topPipeImg = new Image(), bottomPipeImg = new Image();
-birdImg.src = localStorage.getItem("equipped_skin_img");
+if (localStorage.getItem("equipped_skin_img")) {
+    birdImg.src = localStorage.getItem("equipped_skin_img");
+} else {
+    birdImg.src = "./flappybird.png"; // cambia esta ruta según tu estructura
+}
 topPipeImg.src = "./toppipe.png";
 bottomPipeImg.src = "./bottompipe.png";
 

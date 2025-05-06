@@ -1,8 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>  <meta charset="UTF-8" />
+<head>
+  <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Tienda - Plappy Pird</title>
+  <title>Mis Skins - Plappy Pird</title>
   <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet" />
   <style>
     body {
@@ -30,58 +31,58 @@
       margin-bottom: 40px;
     }
 
-.items {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 30px;
-  max-width: 1000px;
-  margin: 0 auto;
-}
+    .items {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 30px;
+      max-width: 1000px;
+      margin: 0 auto;
+    }
 
-.item {
-  background-color: #ffcc00;
-  border: 4px solid #ffaa00;
-  border-radius: 15px;
-  box-shadow: 4px 4px 0px black;
-  width: 200px;
-  padding: 20px;
-  text-align: center;
-  transition: transform 0.1s ease;
-}
+    .item {
+      border: 4px solid;
+      border-radius: 15px;
+      box-shadow: 4px 4px 0px black;
+      width: 200px;
+      padding: 20px;
+      text-align: center;
+      transition: transform 0.1s ease;
+    }
 
-.item:hover {
-  transform: scale(1.05);
-}
+    .item:hover {
+      transform: scale(1.05);
+    }
 
-.item img {
-  width: 100px;
-  height: 100px;
-  image-rendering: pixelated;
-}
+    .item img {
+      width: 100px;
+      height: 100px;
+      image-rendering: pixelated;
+    }
 
-.item p {
-  font-size: 10px;
-  margin: 15px 0;
-  color: black;
-}
+    .item p {
+      font-size: 10px;
+      margin: 10px 0;
+      color: black;
+    }
 
-.equip-btn {
-  margin-top: 10px;
-  background-color: #e6e6e6;
-  border: 3px solid #020202;
-  font-family: 'Press Start 2P', cursive;
-  font-size: 10px;
-  padding: 10px;
-  cursor: pointer;
-  border-radius: 8px;
-  box-shadow: 2px 2px 0px black;
-  transition: transform 0.1s ease;
-}
+    .equip-btn {
+      margin-top: 10px;
+      background-color: #e6e6e6;
+      border: 3px solid #020202;
+      font-family: 'Press Start 2P', cursive;
+      font-size: 10px;
+      padding: 10px;
+      cursor: pointer;
+      border-radius: 8px;
+      box-shadow: 2px 2px 0px black;
+      transition: transform 0.1s ease;
+    }
 
-.equip-btn:hover {
-  transform: scale(1.05);
-}
+    .equip-btn:hover {
+      transform: scale(1.05);
+    }
+
     .back-btn {
       position: absolute;
       top: 20px;
@@ -100,6 +101,46 @@
       background-color: #ffaa00;
     }
 
+    /* Estilos por rareza */
+    .comun {
+      background-color: #b0c4de;
+      border-color: #708090;
+    }
+
+    .raro {
+      background-color: #7fffd4;
+      border-color: #20b2aa;
+    }
+
+    .epico {
+      background: violet;
+      animation: soft-glow 2s infinite alternate;
+    }
+
+    @keyframes soft-glow {
+      from {
+        box-shadow: 0 0 5px violet, 0 0 10px purple;
+      }
+      to {
+        box-shadow: 0 0 15px mediumorchid, 0 0 20px purple;
+      }
+    }
+
+    .legendario {
+      background: linear-gradient(135deg, gold, orange);
+      animation: glow 1s infinite alternate;
+      color: black;
+    }
+
+    /* Animación para legendarias */
+    @keyframes glow {
+      from {
+        box-shadow: 0 0 5px gold, 0 0 10px orange, 0 0 15px red;
+      }
+      to {
+        box-shadow: 0 0 20px yellow, 0 0 30px orange, 0 0 40px red;
+      }
+    }
 
   </style>
 </head>
@@ -107,31 +148,31 @@
 <div>
   <div id="shop-container">
     <button class="back-btn" onclick="navigateTo('MainMenu.html')">Volver</button>
-  <h1>Mis Skins</h1>
-  <div class="items" id="skins-container"></div>
-    </div>
+    <h1>Mis Skins</h1>
+    <div class="items" id="skins-container"></div>
+  </div>
 </div>
 
 <script>
-  if(!localStorage.getItem("token")){
-        navigateTo("WebMenu.html")
+  if (!localStorage.getItem("token")) {
+    navigateTo("WebMenu.html");
   }
 
-    function navigateTo(page) {
-      window.location.href = page;
-    }
+  function navigateTo(page) {
+    window.location.href = page;
+  }
 
-  const token = localStorage.getItem("token")
-  const userId=  parseJwt(token).userId
+  const token = localStorage.getItem("token");
+  const userId = parseJwt(token)?.userId;
 
-if (!userId) {
-  console.warn("No hay user_id en localStorage");
-} else {
-  fetch("http://localhost:3000/get-skins", {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ userId })
-  })
+  if (!userId) {
+    console.warn("No hay user_id en localStorage");
+  } else {
+    fetch("http://localhost:3000/get-skins", {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId })
+    })
     .then(res => res.json())
     .then(skins => {
       const container = document.getElementById("skins-container");
@@ -141,43 +182,61 @@ if (!userId) {
         return;
       }
 
-const equippedSkinId = localStorage.getItem("equipped_skin_id");
+      const equippedSkinId = localStorage.getItem("equipped_skin_id");
 
-skins.forEach(skin => {
-  const div = document.createElement("div");
-  div.className = "item";
+      skins.forEach(skin => {
+        const div = document.createElement("div");
 
-  // Creamos el botón con el texto dependiendo de si está equipada
-  const isEquipped = skin.skin_id == equippedSkinId;
+        // Mapear rarezas a clases CSS
+        let rarityClass = "";
+        switch (skin.rarity.toLowerCase()) {
+          case "común":
+            rarityClass = "comun";
+            break;
+          case "raro":
+            rarityClass = "raro";
+            break;
+          case "épico":
+            rarityClass = "epico";
+            break;
+          case "legendario":
+            rarityClass = "legendario";
+            break;
+          default:
+            rarityClass = "comun";
+        }
 
-  div.innerHTML = `
-    <img src="${skin.image_url}" alt="${skin.name}" />
-    <p>${skin.name}</p>
-    <button class="equip-btn">${isEquipped ? "Equipada" : "Equipar"}</button>
-  `;
+        div.className = `item ${rarityClass}`;
 
-  const button = div.querySelector(".equip-btn");
-  button.addEventListener("click", () => {
-    // Guardar en localStorage
-    localStorage.setItem("equipped_skin_id", skin.skin_id);
-    localStorage.setItem("equipped_skin_img",skin.image_url)
+        const isEquipped = skin.skin_id == equippedSkinId;
 
-    // Cambiar todos los botones a "Equipar"
-    document.querySelectorAll(".equip-btn").forEach(btn => {
-      btn.textContent = "Equipar";
-    });
+        div.innerHTML = `
+          <img src="${skin.image_url}" alt="${skin.name}" />
+          <p>${skin.name}</p>
+          <p style="font-size:8px;">Rareza: ${skin.rarity}</p>
+          <button class="equip-btn">${isEquipped ? "Equipada" : "Equipar"}</button>
+        `;
 
-    // Cambiar este botón a "Equipada"
-    button.textContent = "Equipada";
+        const button = div.querySelector(".equip-btn");
+        button.addEventListener("click", () => {
+          localStorage.setItem("equipped_skin_id", skin.skin_id);
+          localStorage.setItem("equipped_skin_img", skin.image_url);
 
-    alert(`Has equipado la skin: ${skin.name}`);
-  });
+          document.querySelectorAll(".equip-btn").forEach(btn => {
+            btn.textContent = "Equipar";
+          });
 
-  container.appendChild(div);
-});
+          button.textContent = "Equipada";
+
+          alert(`Has equipado la skin: ${skin.name}`);
+        });
+
+        container.appendChild(div);
+      });
     })
     .catch(err => console.error("Error al cargar skins:", err));
-}
+  }
+
   function parseJwt(token) {
     try {
       const base64Url = token.split('.')[1];

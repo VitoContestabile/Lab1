@@ -85,12 +85,12 @@
     <div id="main-menu">
         <h1>Plappy Pird</h1>
         <p id="user-info"></p>
-        <button onclick="navigateTo('play.html')">Jugar</button>
-        <button onclick="navigateTo('playonline.html')">Play Online</button>
-        <button onclick="navigateTo('friends.html')">Friends</button>
-        <button onclick="navigateTo('rank.html')">Rank</button>
-        <button onclick="navigateTo('shop.html')">Shop</button>
-        <button onclick="navigateTo('settings.html')">Settings</button>
+        <button onclick="navigateTo('play.html')">Jugar Solo</button>
+        <button onclick="navigateTo('playonline.html')">Jugar Online</button>
+        <button onclick="navigateTo('friends.html')">Amigos</button>
+        <button onclick="navigateTo('rank.html')">Rangos</button>
+        <button onclick="navigateTo('shop.html')">Tienda</button>
+        <button onclick="navigateTo('settings.html')">Opciones</button>
         <button onclick="logout()">Cerrar sesión</button>
     </div>
 
@@ -150,6 +150,7 @@
         function logout() {
             localStorage.removeItem("token");
             window.location.href = "login.html";
+            localStorage.removeItem("equipped_skin_img")
         }
         function parseJwt(token) {
                     try {

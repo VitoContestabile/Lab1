@@ -13,26 +13,30 @@
       background-color: skyblue;
       margin: 0;
       overflow: hidden;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-      flex-direction: column;
     }
-
+    #game-over {
+      position: absolute;
+      width: 100%;
+      height: 100vh;
+      background: url("flappybirdbg.png") no-repeat center center;
+      background-size: cover;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
     h1 {
       font-size: 50px;
       color: white;
       text-shadow: 4px 4px 0px black;
       margin-bottom: 30px;
     }
-
-    .score {
-      font-size: 30px;
+    .score, .coins-earned, .new-record {
+      font-size: 25px;
       color: white;
-      margin-bottom: 30px;
+      margin-bottom: 20px;
+      text-shadow: 2px 2px 0px black;
     }
-
     button {
       width: 250px;
       font-size: 20px;
@@ -46,32 +50,114 @@
       box-shadow: 4px 4px 0px black;
       transition: transform 0.1s ease;
     }
-
     button:hover {
       background-color: #ffaa00;
       transform: scale(1.05);
     }
-
     button:active {
       transform: scale(0.95);
     }
+
+    #coin-display {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  display: flex;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 10px;
+  padding: 6px 10px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  font-family: Arial, sans-serif;
+  font-size: 16px;
+}
+
+#coin-display img {
+  width: 24px;
+  height: 24px;
+  margin-right: 6px;
+}
+
+
   </style>
 </head>
 <body>
-  <h1>Game Over</h1>
-  <div id="score" class="score">Score: 0</div>
-  <button onclick="playAgain()">Play Again</button>
-  <button onclick="backToMenu()">Main Menu</button>
+  <div id="game-over">
+    <h1>Game Over</h1>
+    <div id="score" class="score">Puntaje: 0</div>
+    <div id="coins-earned" class="coins-earned"></div>
+    <div id="new-record" class="new-record"></div>
+    <button onclick="playAgain()">Jugar de nuevo</button>
+    <button onclick="backToMenu()">Menu Principal</button>
+    <div id="coin-display">
+      <img src="coin.jpg" alt="Moneda" />
+      <span id="coin-count">0</span>
+    </div>
+  </div>
 
   <script>
-    // Retrieve score from localStorage
-    window.onload = function() {
-      const score = localStorage.getItem('lastScore') || 0;
-      document.getElementById('score').textContent = `Score: ${score}`;
+
+
+    async function main() {
+      const token = localStorage.getItem("token");
+      if (!token) return navigateTo("WebMenu.html");
+
+      const score = parseInt(localStorage.getItem('lastScore') || 0);
+      document.getElementById('score').textContent = `Puntaje: ${score}`;
+
+      const userId = parseJwt(token).userId;
+
+       updateCoinDisplay(userId);
+
+      if (!userId) return navigateTo("WebMenu.html");
+
+      try {
+        const res = await fetch('http://localhost:3000/get-user', {
+          method: 'POST',
+          headers: {
+                    'Content-Type': 'application/json'
+                },
+          body: JSON.stringify({ id: userId })
+        });
+
+        const user = await res.json();
+        console.log(user.score)
+        const monedasGanadas = Math.floor(score / 10);
+        const nuevoRecord = score > user.score;
+
+        if (nuevoRecord) {
+          document.getElementById("new-record").textContent = "¡Nuevo récord personal!";
+        }
+
+        if(monedasGanadas<1){
+          document.getElementById("coins-earned").textContent = `No ganaste nada choto 8====D`;
+        }
+        else{
+          document.getElementById("coins-earned").textContent = `¡Ganaste ${monedasGanadas} monedas!`;
+        }
+        // Mostrar en pantalla
+
+
+
+        // Actualizar en base de datos
+        await fetch('http://localhost:3000/update-score-coins', {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            id: userId,
+            coins: user.coins + monedasGanadas,
+            score: nuevoRecord ? score : user.score
+          })
+        });
+
+      } catch (err) {
+        console.error("Error al actualizar datos:", err);
+      }
     }
 
     function playAgain() {
-      // Set a flag to indicate automatic game start
       localStorage.setItem('autoStart', 'true');
       window.location.href = 'play.html';
     }
@@ -79,6 +165,41 @@
     function backToMenu() {
       window.location.href = 'MainMenu.html';
     }
+
+    function parseJwt(token) {
+      try {
+        const base64Url = token.split('.')[1];
+        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+        const jsonPayload = decodeURIComponent(atob(base64).split('').map(c =>
+          '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)
+        ).join(''));
+        return JSON.parse(jsonPayload);
+      } catch (e) {
+        return null;
+      }
+    }
+
+    function navigateTo(url) {
+      window.location.href = url;
+    }
+
+    window.onload = main;
+
+  async function updateCoinDisplay(userId) {
+    const res = await fetch('http://localhost:3000/get-coins', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ id: userId })
+    });
+
+    const data = await res.json();
+    document.getElementById("coin-count").textContent = data.coins;
+  }
+
+
+
   </script>
 </body>
 </html>

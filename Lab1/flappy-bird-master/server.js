@@ -19,7 +19,7 @@ const client = new Client({
   user: 'postgres',           // Usuario de la base de datos
   host: 'localhost',             // Dirección del servidor PostgreSQL
   database: 'FlappyDB',       // Nombre de la base de datos
-  password: 'Unlion2005',     // Contraseña del usuario
+  password: 'Vitoman1',     // Contraseña del usuario
   port: 5432,                    // Puerto de PostgreSQL
 });
 
@@ -37,6 +37,7 @@ client.connect((err) => {
 client.query(`
   CREATE TABLE IF NOT EXISTS users (
     id SERIAL PRIMARY KEY,
+    email VARCHAR(255) UNIQUE NOT NULL,
     username VARCHAR(255) UNIQUE NOT NULL,
     password VARCHAR(255) NOT NULL,
     coins INT DEFAULT 0,
@@ -48,6 +49,17 @@ client.query(`
     console.error('Error al crear la tabla de usuarios', err);
   } else {
     console.log('Tabla de usuarios creada o ya existe');
+  }
+});
+
+client.query(`
+  INSERT INTO users (email,username, password, coins, score, is_admin)
+  VALUES ('a@gmail.com','vito', '1234', 0, 0, true)
+`, (err, res) => {
+  if (err) {
+    console.error('Error al insertar el usuario', err);
+  } else {
+    console.log('Usuario insertado correctamente');
   }
 });
 
@@ -155,21 +167,21 @@ client.query(`
 });
 
 insertSkin("normal", "./flappybird.png", 0, "común")
-insertSkin("Arturo", "./arturo.png", 0, "raro")
-insertSkin("Jtorres", "./jtorres.png", 0, "raro")
+insertSkin("Arturo", "./arturo.png", 0, "épico")
+insertSkin("Jtorres", "./jtorres.png", 100, "legendario")
 
 //shop ----------------------------------------------------------------------------
 
 // Ruta para registrar usuarios
 app.post('/register', (req, res) => {
-  const { username, password } = req.body;
+  const { username, password, email } = req.body;
 
-  if (!username || !password) {
+  if (!username || !password || !email) {
     return res.status(400).json({ message: 'Por favor completa todos los campos.' });
   }
 
   // Verificar si el usuario ya existe
-  client.query('SELECT * FROM users WHERE username = $1', [username], (err, result) => {
+  client.query('SELECT * FROM users WHERE username = $1 OR email= $2 ', [username, email], (err, result) => {
     if (err) {
       return res.status(500).json({ message: 'Error al verificar el usuario', error: err });
     }
@@ -179,7 +191,7 @@ app.post('/register', (req, res) => {
     }
 
     // Insertar el nuevo usuario en la base de datos
-    client.query('INSERT INTO users (username, password) VALUES ($1, $2) RETURNING id', [username, password], (err, result) => {
+    client.query('INSERT INTO users (username, password,email) VALUES ($1, $2, $3) RETURNING id', [username, password, email], (err, result) => {
       if (err) {
         return res.status(500).json({ message: 'Error al registrar el usuario', error: err });
       }
@@ -188,9 +200,40 @@ app.post('/register', (req, res) => {
   });
 });
 
+//actualizar nombre del usuario
+
+app.post('/update-username', (req, res) => {
+  const { userId, username } = req.body;
+
+  if (!userId || !username) {
+    return res.status(400).json({ message: 'Faltan campos requeridos.' });
+  }
+
+  // Verificar si el nuevo nombre ya existe
+  client.query('SELECT * FROM users WHERE username = $1', [username], (err, result) => {
+    if (err) {
+      return res.status(500).json({ message: 'Error al verificar el nuevo username', error: err });
+    }
+
+    if (result.rows.length > 0) {
+      return res.status(400).json({ message: 'El nombre de usuario ya está en uso.' });
+    }
+
+    // Actualizar el nombre de usuario
+    client.query('UPDATE users SET username = $1 WHERE id = $2', [username, userId], (err, result) => {
+      if (err) {
+        return res.status(500).json({ message: 'Error al actualizar el username', error: err });
+      }
+
+      res.status(200).json({ message: 'Nombre de usuario actualizado correctamente.' });
+    });
+  });
+});
+
+
 // Ruta para login
 app.post('/login', (req, res) => {
-  const { username, password } = req.body;
+  const { username, password} = req.body;
 
   if (!username || !password) {
     return res.status(400).json({ message: 'Por favor ingresa ambos campos.' });
@@ -614,4 +657,52 @@ app.post('/admin/toggle-freeze', (req, res) => {
       });
     });
   });
+});
+
+app.post("/get-all-skins", async (req, res) => {
+  try {
+    const result = await client.query("SELECT * FROM skins");
+    res.json(result.rows);
+  } catch (err) {
+    console.error("Error al obtener todas las skins:", err);
+    res.status(500).json({ error: "Error interno al obtener skins" });
+  }
+});
+
+
+// Obtener datos del usuario
+app.post("/get-user", async (req, res) => {
+  const { id } = req.body;
+
+  try {
+    const result = await client.query('SELECT id, coins, score FROM users WHERE id = $1', [id]);
+    console.log("Resultado:", result.rows);
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error("Error al consultar la base de datos:", err);
+    res.status(500).json({ error: "Error al obtener datos del usuario" });
+  }
+});
+// Actualizar score y monedas
+app.put("/update-score-coins", async (req, res) => {
+  const { id, coins, score } = req.body;
+  try {
+    await client.query('UPDATE users SET coins = $1, score = $2 WHERE id = $3', [coins, score, id]);
+    res.json({ message: "Score y monedas actualizados correctamente" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error al actualizar score y monedas" });
+  }
+});
+
+app.post("/get-coins", async (req, res) => {
+  const { id } = req.body;
+
+  try {
+    const result = await client.query('SELECT coins FROM users WHERE id = $1', [id]);
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error("Error al consultar la base de datos:", err);
+    res.status(500).json({ error: "Error al obtener datos del usuario" });
+  }
 });

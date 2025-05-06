@@ -44,8 +44,8 @@
 
         input[type="checkbox"] {
             margin-right: 10px;
-            width: 30px;
-            height: 30px;
+            width: 40px;
+            height: 40px;
         }
 
         /* Estilo de los enlaces */
@@ -74,6 +74,22 @@
             box-shadow: 4px 4px 0px black;
             transition: transform 0.1s ease;
         }
+                /* Estilo de los campos de entrada */
+        input {
+            background-color: #333;
+            border: 4px solid #ffaa00;
+            color: white;
+            padding: 15px 30px;
+            margin: 10px;
+            border-radius: 10px;
+            font-size: 20px;
+            outline: none;
+            transition: transform 0.1s ease, box-shadow 0.2s;
+        }
+
+        input:focus {
+            box-shadow: 0 0 10px #ffaa00;
+        }
 
         /* Efecto al pasar el mouse */
         button:hover {
@@ -90,12 +106,12 @@
 </head>
 <body>
     <div id="settings-container">
-        <h2>Configuración</h2>
-        <label>
-            <input type="checkbox" id="sound-checkbox"> Sonido activado
-        </label>
-        <button onclick="location.href='MainMenu.html'">Volver al menú</button>
-        <button onclick="location.href='CambiarNombre.html'">Cambiar Nombre</button>
+        <h2>Ingrese Nuevo Nombre</h2>
+      <div>
+            <input type="text" id="username" placeholder="Usuario" required>
+        </div>
+        <button onclick="cambiarNombre()">Cambiar Nombre</button>
+        <button onclick="navigateTo('MainMenu.html')">Volver al menú</button>
     </div>
 
     <script>
@@ -105,51 +121,54 @@
   }
 
         function navigateTo(page) {
-            window.location.href = page;
-    }
-    const soundCheckbox = document.getElementById("sound-checkbox");
-    let sound = new Audio('flappybird-sound.mp3.mp3');
-    sound.loop = true;
-
-    // Verificar si el sonido estaba activado antes
-    if (localStorage.getItem("soundEnabled") === "true") {
-        soundCheckbox.checked = true;
-        if (!window.soundPlaying) {
-            sound.play();
-            window.soundPlaying = true;
+          window.location.href = page;
         }
-    }
 
-    function toggleSound() {
-        if (soundCheckbox.checked) {
-            sound.play();
-            window.soundPlaying = true;
-            localStorage.setItem("soundEnabled", "true");
-        } else {
-            sound.pause();
-            localStorage.setItem("soundEnabled", "false");
+        function getUserId(){
+          const token = localStorage.getItem("token")
+          return parseJwt(token).userId
         }
-    }
 
-    soundCheckbox.addEventListener("change", toggleSound);
+
+   function cambiarNombre() {
+            var username = document.getElementById("username").value;
+
+            if (username === "") {
+                alert("Por favor ingresa el campo.");
+                return;
+            }
+
+            var id= getUserId()
+
+
+            fetch('http://localhost:3000/update-username', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': localStorage.getItem("token") },
+                body: JSON.stringify({ username: username, userId: id })
+            })
+                .then(async response => {
+                    const data = await response.json();
+                    alert(data.message)
+
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Error en la conexión al servidor.');
+                });
+        }
+       function parseJwt(token) {
+      try {
+        const base64Url = token.split('.')[1];
+        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+        const jsonPayload = decodeURIComponent(atob(base64).split('').map(c => {
+          return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+        }).join(''));
+        return JSON.parse(jsonPayload);
+      } catch (e) {
+        return null;
+      }
+    }
 </script>
-<script>
-    const soundCheckbox = document.getElementById("sound-checkbox");
-
-    // Cargar el estado del sonido
-    if (localStorage.getItem("soundEnabled") === "true") {
-        soundCheckbox.checked = true;
-    }
-
-    soundCheckbox.addEventListener("change", function () {
-        if (this.checked) {
-            window.soundManager.play();
-        } else {
-            window.soundManager.pause();
-        }
-    });
-</script>
-
 
 </body>
 </html>
