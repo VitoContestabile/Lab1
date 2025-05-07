@@ -8,6 +8,7 @@ const cors = require('cors');
 const app = express();
 const SECRET = 'clave';
 const port = 3000;
+const verifyToken = require('./auth-middleware');
 
 // Middleware
 app.use(cors());
@@ -53,13 +54,14 @@ client.query(`
 });
 
 client.query(`
-  INSERT INTO users (email,username, password, coins, score, is_admin)
-  VALUES ('a@gmail.com','vito', '1234', 0, 0, true)
+  INSERT INTO users (email, username, password, coins, score, is_admin)
+  VALUES ('a@gmail.com', 'vito', '1234', 0, 0, true)
+  ON CONFLICT (email) DO NOTHING
 `, (err, res) => {
   if (err) {
     console.error('Error al insertar el usuario', err);
   } else {
-    console.log('Usuario insertado correctamente');
+    console.log('Usuario insertado correctamente o ya existía');
   }
 });
 
@@ -167,6 +169,21 @@ client.query(`
   else console.log('Tabla de solicitudes creada o ya existe');
 });
 
+//lobby
+
+client.query(`
+  CREATE TABLE IF NOT EXISTS lobby (
+    id SERIAL PRIMARY KEY,
+    host_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    guest_id INT REFERENCES users(id) ON DELETE SET NULL,
+    status TEXT DEFAULT 'waiting',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+`, (err) => {
+  if (err) console.error('Error al crear la tabla lobby', err);
+  else console.log('Tabla de lobby creada o ya existe');
+});
+
 insertSkin("normal", "./flappybird.png", 0, "común")
 insertSkin("Arturo", "./arturo.png", 0, "épico")
 insertSkin("Jtorres", "./jtorres.png", 100, "legendario")
@@ -203,8 +220,9 @@ app.post('/register', (req, res) => {
 
 //actualizar nombre del usuario
 
-app.post('/update-username', (req, res) => {
-  const { userId, username } = req.body;
+app.post('/update-username', verifyToken, (req, res) => {
+  const { username } = req.body;
+  const userId = req.userId; // Obtenido del middleware de verificación
 
   if (!userId || !username) {
     return res.status(400).json({ message: 'Faltan campos requeridos.' });
@@ -220,16 +238,28 @@ app.post('/update-username', (req, res) => {
       return res.status(400).json({ message: 'El nombre de usuario ya está en uso.' });
     }
 
-    // Actualizar el nombre de usuario
-    client.query('UPDATE users SET username = $1 WHERE id = $2', [username, userId], (err, result) => {
+    // Verificar que el usuario solo pueda modificar su propio perfil
+    client.query('SELECT id FROM users WHERE id = $1', [userId], (err, userResult) => {
       if (err) {
-        return res.status(500).json({ message: 'Error al actualizar el username', error: err });
+        return res.status(500).json({ message: 'Error al verificar usuario', error: err });
       }
 
-      res.status(200).json({ message: 'Nombre de usuario actualizado correctamente.' });
+      if (userResult.rows.length === 0) {
+        return res.status(404).json({ message: 'Usuario no encontrado.' });
+      }
+
+      // Actualizar el nombre de usuario
+      client.query('UPDATE users SET username = $1 WHERE id = $2', [username, userId], (err, result) => {
+        if (err) {
+          return res.status(500).json({ message: 'Error al actualizar el username', error: err });
+        }
+
+        res.status(200).json({ message: 'Nombre de usuario actualizado correctamente.' });
+      });
     });
   });
 });
+
 
 
 // Ruta para login
@@ -757,5 +787,151 @@ app.post("/get-current-skin-id", async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Error al obtener la skin" });
+  }
+});
+
+//Lobby
+
+app.post('/friends-without-lobby', async (req, res) => {
+  const { myId } = req.body;
+
+  try {
+    const result = await client.query(`
+      SELECT u.id, u.username
+      FROM users u
+      JOIN friends f ON 
+          (f.user1_id = $1 AND f.user2_id = u.id) OR 
+          (f.user2_id = $1 AND f.user1_id = u.id)
+      WHERE NOT EXISTS (
+          SELECT 1
+          FROM lobby l
+          WHERE 
+              l.status IN ('waiting', 'full', 'playing') AND (
+                  (l.host_id = $1 AND l.guest_id = u.id) OR
+                  (l.host_id = u.id AND l.guest_id = $1)
+              )
+      )
+    `, [myId]);
+
+    res.json(result.rows);
+  } catch (err) {
+    console.error('Error al buscar amigos sin lobby:', err);
+    res.status(500).json({ success: false });
+  }
+});
+app.post('/invite-friend-to-lobby', async (req, res) => {
+  const { host_id, friend_id } = req.body;
+
+  try {
+    // Verificar que sean amigos
+    const friendCheck = await client.query(`
+      SELECT 1 FROM friends
+      WHERE (user1_id = $1 AND user2_id = $2)
+         OR (user1_id = $2 AND user2_id = $1)
+    `, [host_id, friend_id]);
+
+    if (friendCheck.rowCount === 0) {
+      return res.status(400).json({ success: false, message: 'No son amigos' });
+    }
+
+    // Eliminar cualquier lobby anterior del host que esté en espera
+    await client.query(`
+      DELETE FROM lobby 
+      WHERE host_id = $1 AND status = 'waiting' AND guest_id IS NULL
+    `, [host_id]);
+
+    // Crear un nuevo lobby
+    const result = await client.query(`
+      INSERT INTO lobby (host_id, status)
+      VALUES ($1, 'waiting')
+        RETURNING id
+    `, [host_id]);
+
+    res.json({ success: true, lobbyId: result.rows[0].id });
+  } catch (err) {
+    console.error('Error al invitar al amigo al lobby:', err);
+    res.status(500).json({ success: false });
+  }
+});
+
+app.post('/accept-lobby-invite', async (req, res) => {
+  const { lobbyId, guest_id } = req.body;
+
+  try {
+    // Verificamos que el lobby existe y aún está esperando
+    const result = await client.query(
+        `SELECT * FROM lobby WHERE id = $1`,
+        [lobbyId]
+    );
+
+    const lobby = result.rows[0];
+
+    if (!lobby) {
+      return res.status(404).json({ success: false, message: 'Lobby no encontrado' });
+    }
+
+    if (lobby.status !== 'waiting' || lobby.guest_id !== null) {
+      return res.status(400).json({ success: false, message: 'Lobby no disponible' });
+    }
+
+    // Verificamos que sean amigos
+    const friendCheck = await client.query(`
+      SELECT 1 FROM friends 
+      WHERE (user1_id = $1 AND user2_id = $2) 
+         OR (user1_id = $2 AND user2_id = $1)
+    `, [lobby.host_id, guest_id]);
+
+    if (friendCheck.rowCount === 0) {
+      return res.status(403).json({ success: false, message: 'No son amigos' });
+    }
+
+    // Se une al lobby
+    await client.query(`
+      UPDATE lobby 
+      SET guest_id = $1, status = 'full'
+      WHERE id = $2
+    `, [guest_id, lobbyId]);
+
+    res.json({ success: true });
+  } catch (err) {
+    console.error('Error al aceptar el lobby:', err);
+    res.status(500).json({ success: false });
+  }
+});
+app.get('/ranking', async (req, res) => {
+  try {
+    const result = await client.query(`SELECT username, score FROM users where is_admin=false ORDER BY score  DESC , username ASC LIMIT 100;`);
+    res.status(200).json({ ranking: result.rows });
+  } catch (err) {
+    console.error('Error al obtener el ranking:', err);
+    res.status(500).json({ error: 'Error interno del servidor' });
+  }
+});
+
+app.get('/perfil/:username', async (req, res) => {
+  const { username } = req.params;
+
+  try {
+    // Consulta a la base de datos para obtener los datos del usuario
+    const query = 'SELECT username, score, coins, is_admin, games_played FROM users WHERE username = $1';
+    const result = await client.query(query, [username]);
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: 'Usuario no encontrado' });
+    }
+
+    const user = result.rows[0];
+
+    // Responde con los datos del usuario
+    return res.json({
+      username: user.username,
+      score: user.score,
+      coins: user.coins,
+      is_admin: user.is_admin,
+      games_played: user.games_played
+    });
+  } catch (error) {
+    console.error('Error al obtener el perfil:', error);
+    res.status(500).json({ message: 'Error en el servidor' });
   }
 });
