@@ -107,6 +107,7 @@ client.query(`
   CREATE TABLE IF NOT EXISTS skins_user (
     skin_id INTEGER,
     user_id INTEGER,
+    equiped BOOLEAN DEFAULT FALSE,
     PRIMARY KEY (skin_id, user_id),
     FOREIGN KEY (skin_id) REFERENCES skins(skin_id),
     FOREIGN KEY (user_id) REFERENCES users(id)
@@ -704,5 +705,57 @@ app.post("/get-coins", async (req, res) => {
   } catch (err) {
     console.error("Error al consultar la base de datos:", err);
     res.status(500).json({ error: "Error al obtener datos del usuario" });
+  }
+});
+
+app.post("/select-skin", async (req, res) => {
+  const { userId, skinId } = req.body;
+  try {
+    await client.query('UPDATE skins_user SET equiped=FALSE WHERE user_id= $1 and equiped=TRUE', [userId]);
+    await client.query('UPDATE skins_user SET equiped=TRUE WHERE user_id= $1 and skin_id=$2', [userId,skinId]);
+
+    res.json({ message: "Current skin actualizada con éxito" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error al actualizar skin equipada" });
+  }
+});
+
+app.post("/get-current-skin-image", async (req, res) => {
+  const { userId } = req.body;
+  try {
+    const result = await client.query(
+      'SELECT image_url FROM skins_user JOIN skins on skins.skin_id = skins_user.skin_id WHERE user_id = $1 AND equiped = TRUE',
+      [userId]
+    );
+
+    const imageUrl = result.rows[0]?.image_url;
+    if (!imageUrl) {
+      return res.status(404).json({ error: "No skin equipada encontrada" });
+    }
+
+    res.json({ image_url: imageUrl });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error al obtener la skin" });
+  }
+});
+
+app.post("/get-current-skin-id", async (req, res) => {
+  const { userId } = req.body;
+  try {
+    const result = await client.query(
+      'SELECT skin_id FROM skins_user WHERE user_id = $1 AND equiped = TRUE',
+      [userId]
+    );
+    const skinId = result.rows[0]?.skin_id;
+    if (!skinId) {
+      return res.json({ skinId: "" });
+    }
+
+    res.json({ skinId: skinId });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Error al obtener la skin" });
   }
 });

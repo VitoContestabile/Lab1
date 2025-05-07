@@ -85,6 +85,25 @@
         button:active {
             transform: scale(0.95);
         }
+    #coin-display {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  display: flex;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 10px;
+  padding: 6px 10px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  font-family: Arial, sans-serif;
+  font-size: 16px;
+}
+
+#coin-display img {
+  width: 24px;
+  height: 24px;
+  margin-right: 6px;
+}
     </style>
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
 </head>
@@ -97,6 +116,11 @@
         <button onclick="location.href='MainMenu.html'">Volver al menú</button>
         <button onclick="location.href='CambiarNombre.html'">Cambiar Nombre</button>
     </div>
+    <div id="coin-display">
+      <img src="coin.jpg" alt="Moneda" />
+      <span id="coin-count">0</span>
+    </div>
+
 
     <script>
 
@@ -107,6 +131,29 @@
         function navigateTo(page) {
             window.location.href = page;
     }
+
+ document.addEventListener("DOMContentLoaded", async function () {
+      const token = localStorage.getItem("token");
+
+      const userId = parseJwt(token).userId
+
+      async function updateCoinDisplay(userId) {
+        const res = await fetch('http://localhost:3000/get-coins', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({id: userId})
+        });
+
+        const data = await res.json();
+        document.getElementById("coin-count").textContent = data.coins;
+      }
+
+      await updateCoinDisplay(userId);
+
+    });
+
     const soundCheckbox = document.getElementById("sound-checkbox");
     let sound = new Audio('flappybird-sound.mp3.mp3');
     sound.loop = true;
@@ -130,8 +177,23 @@
             localStorage.setItem("soundEnabled", "false");
         }
     }
+      function parseJwt(token) {
+        try {
+          const base64Url = token.split('.')[1];
+          const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+          const jsonPayload = decodeURIComponent(atob(base64).split('').map(c => {
+            return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+          }).join(''));
+          return JSON.parse(jsonPayload);
+        } catch (e) {
+          return null;
+        }
+      }
+
 
     soundCheckbox.addEventListener("change", toggleSound);
+
+
 </script>
 <script>
     const soundCheckbox = document.getElementById("sound-checkbox");
@@ -148,6 +210,8 @@
             window.soundManager.pause();
         }
     });
+
+
 </script>
 
 

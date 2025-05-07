@@ -45,11 +45,51 @@ let openingSpace = 250;
 
 // Imágenes
 let birdImg = new Image(), topPipeImg = new Image(), bottomPipeImg = new Image();
-if (localStorage.getItem("equipped_skin_img")) {
-    birdImg.src = localStorage.getItem("equipped_skin_img");
-} else {
-    birdImg.src = "./flappybird.png"; // cambia esta ruta según tu estructura
+
+const token = localStorage.getItem("token");
+const userId = parseJwt(token).userId;
+console.log(userId)
+
+async function loadBirdSkin(userId) {
+  const res = await fetch("http://localhost:3000/get-current-skin-image", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({ userId: userId })
+  });
+
+  const data = await res.json();
+  return data.image_url;
 }
+
+function parseJwt(token) {
+    try {
+        const base64Url = token.split('.')[1];
+        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+        const jsonPayload = decodeURIComponent(atob(base64).split('').map(c => {
+            return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+        }).join(''));
+        return JSON.parse(jsonPayload);
+    } catch (e) {
+        return null;
+    }
+}
+
+loadBirdSkin(userId).then(imageUrl => {
+  if (imageUrl) {
+
+    birdImg.src = imageUrl;
+
+    // Podés esperar a que se cargue antes de usarlo:
+    birdImg.onload = () => {
+      // Ahora podés dibujar el pájaro en el canvas
+      console.log("Imagen cargada:");
+    };
+  } else {
+    console.error("No se recibió image_url");
+  }
+});
 topPipeImg.src = "./toppipe.png";
 bottomPipeImg.src = "./bottompipe.png";
 
