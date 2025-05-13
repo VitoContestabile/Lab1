@@ -17,7 +17,7 @@
       position: absolute;
       width: 100%;
       height: 100vh;
-      background: url("flappybirdbg.png") no-repeat center center;
+      background: url("/assets/flappybirdbg.png") no-repeat center center;
       background-size: cover;
       display: flex;
       flex-direction: column;
@@ -101,7 +101,7 @@
       alert("Usuario no logueado");
       return;
     }
-    fetch("http://localhost:3000/friends", {
+    fetch("http://localhost:3000/friends/friends", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ userId: userId })

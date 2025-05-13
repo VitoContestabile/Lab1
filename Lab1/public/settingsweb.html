@@ -19,7 +19,7 @@
             position: absolute;
             width: 100%;
             height: 100vh;
-            background: url("flappybirdbg.png") no-repeat center center;
+            background: url("assets/flappybirdbg.png") no-repeat center center;
             background-size: cover;
             display: flex;
             flex-direction: column;
@@ -109,7 +109,7 @@
         const soundCheckbox = document.getElementById("sound-checkbox");
 
         // Crear un objeto de audio para el sonido de Flappy Bird
-        const sound = new Audio('flappybird-sound.mp3'); // Ruta a tu archivo de sonido
+        const sound = new Audio('./assets/flappybird-sound.mp3'); // Ruta a tu archivo de sonido
 
         // Controlar el estado del sonido
         let isSoundEnabled = false; // Inicialmente, el sonido está desactivado

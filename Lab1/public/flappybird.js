@@ -51,7 +51,7 @@ const userId = parseJwt(token).userId;
 console.log(userId)
 
 async function loadBirdSkin(userId) {
-  const res = await fetch("http://localhost:3000/get-current-skin-image", {
+  const res = await fetch("http://localhost:3000/shop/get-current-skin-image", {
     method: "POST",
     headers: {
       "Content-Type": "application/json"
@@ -90,8 +90,8 @@ loadBirdSkin(userId).then(imageUrl => {
     console.error("No se recibió image_url");
   }
 });
-topPipeImg.src = "./toppipe.png";
-bottomPipeImg.src = "./bottompipe.png";
+topPipeImg.src = "./assets/toppipe.png";
+bottomPipeImg.src = "./assets/bottompipe.png";
 
 // Juego
 let velocityX = -2;  // Velocidad reducida para que arranque más despacio

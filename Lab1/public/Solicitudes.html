@@ -17,7 +17,7 @@
             position: absolute;
             width: 100%;
             height: 100vh;
-            background: url("flappybirdbg.png") no-repeat center center;
+            background: url("/assets/flappybirdbg.png") no-repeat center center;
             background-size: cover;
             display: flex;
             flex-direction: column;
@@ -108,7 +108,7 @@
         }
 
         // Paso 1: Obtener el ID del amigo
-        fetch("http://localhost:3000/get-user-id", {
+        fetch("http://localhost:3000/user/get-user-id", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ username: friendUsername })
@@ -123,7 +123,7 @@
                 const receiverId = data.userId;
 
                 // Paso 2: Enviar la solicitud
-                return fetch("http://localhost:3000/send-friend-request", {
+                return fetch("http://localhost:3000/friends/send-friend-request", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ senderId, receiverId })

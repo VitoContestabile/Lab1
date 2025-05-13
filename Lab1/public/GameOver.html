@@ -18,7 +18,7 @@
       position: absolute;
       width: 100%;
       height: 100vh;
-      background: url("flappybirdbg.png") no-repeat center center;
+      background: url("/assets/flappybirdbg.png") no-repeat center center;
       background-size: cover;
       display: flex;
       flex-direction: column;
@@ -90,7 +90,7 @@
     <button onclick="playAgain()">Jugar de nuevo</button>
     <button onclick="backToMenu()">Menu Principal</button>
     <div id="coin-display">
-      <img src="coin.jpg" alt="Moneda" />
+      <img src="/assets/coin.jpg" alt="Moneda" />
       <span id="coin-count">0</span>
     </div>
   </div>
@@ -112,7 +112,7 @@
       if (!userId) return navigateTo("WebMenu.html");
 
       try {
-        const res = await fetch('http://localhost:3000/get-user', {
+        const res = await fetch('http://localhost:3000/user/get-user', {
           method: 'POST',
           headers: {
                     'Content-Type': 'application/json'
@@ -140,7 +140,7 @@
 
 
         // Actualizar en base de datos
-        await fetch('http://localhost:3000/update-score-coins', {
+        await fetch('http://localhost:3000/game/update-score-coins', {
           method: "PUT",
           headers: {
             "Content-Type": "application/json"
@@ -186,7 +186,7 @@
     window.onload = main;
 
   async function updateCoinDisplay(userId) {
-    const res = await fetch('http://localhost:3000/get-coins', {
+    const res = await fetch('http://localhost:3000/game/get-coins', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'

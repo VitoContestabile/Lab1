@@ -1,7 +1,8 @@
-// Middleware para verificar tokens JWT
+// middleware/auth.js
 const jwt = require('jsonwebtoken');
-const SECRET = 'clave'; // Usa la misma clave que en server.js
+const SECRET = 'clave'; // Mejor moverlo a variables de entorno en producción
 
+// Middleware para verificar token
 function verifyToken(req, res, next) {
     // Obtener el encabezado de autorización
     const authHeader = req.headers.authorization;
@@ -28,5 +29,4 @@ function verifyToken(req, res, next) {
         return res.status(401).json({ message: 'Token inválido o expirado.' });
     }
 }
-
-module.exports = verifyToken;
+module.exports = { verifyToken, SECRET };

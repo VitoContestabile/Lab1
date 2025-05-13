@@ -19,7 +19,7 @@
             position: absolute;
             width: 100%;
             height: 100vh;
-            background: url("flappybirdbg.png") no-repeat center center;
+            background: url("/assets/flappybirdbg.png") no-repeat center center;
             background-size: cover;
             display: flex;
             flex-direction: column;
@@ -124,7 +124,7 @@
             const password = document.getElementById('password').value;
 
             // Enviar los datos al backend usando fetch
-            const response = await fetch('http://localhost:3000/register', {
+            const response = await fetch('http://localhost:3000/auth/register', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'

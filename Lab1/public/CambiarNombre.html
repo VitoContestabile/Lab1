@@ -19,7 +19,7 @@
             position: absolute;
             width: 100%;
             height: 100vh;
-            background: url("flappybirdbg.png") no-repeat center center;
+            background: url("assets/flappybirdbg.png") no-repeat center center;
             background-size: cover;
             display: flex;
             flex-direction: column;
@@ -162,7 +162,7 @@
             return;
         }
 
-        fetch('http://localhost:3000/update-username', {
+        fetch('http://localhost:3000/user/update-username', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',

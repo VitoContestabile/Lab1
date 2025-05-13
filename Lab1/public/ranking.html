@@ -17,7 +17,7 @@
       position: absolute;
       width: 100%;
       height: 100vh;
-      background: url("flappybirdbg.png") no-repeat center center;
+      background: url("/assets/flappybirdbg.png") no-repeat center center;
       background-size: cover;
       display: flex;
       flex-direction: column;
@@ -111,7 +111,7 @@
 <script>
   async function cargarRanking() {
     try {
-      const res = await fetch('http://localhost:3000/ranking');
+      const res = await fetch('http://localhost:3000/user/ranking');
       console.log('Estado de la respuesta:', res.status);
 
       if (!res.ok) throw new Error(`HTTP ${res.status}`);

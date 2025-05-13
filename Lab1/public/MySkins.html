@@ -16,7 +16,7 @@
 
     #shop-container {
       min-height: 100vh;
-      background: url("flappybirdbg.png") no-repeat center center;
+      background: url("/assets/flappybirdbg.png") no-repeat center center;
       background-size: cover;
       display: flex;
       flex-direction: column;
@@ -188,7 +188,7 @@
     </div>
   </div>
   <div id="coin-display">
-    <img src="coin.jpg" alt="Moneda" />
+    <img src="/assets/coin.jpg" alt="Moneda" />
     <span id="coin-count">0</span>
   </div>
 </div>
@@ -237,7 +237,7 @@
 
   async function updateCoinDisplay(userId) {
     try {
-      const res = await fetch('http://localhost:3000/get-coins', {
+      const res = await fetch('http://localhost:3000/game/get-coins', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -258,7 +258,7 @@
 
   async function getCurrentSkinId(userId) {
     try {
-      const res = await fetch('http://localhost:3000/get-current-skin-id', {
+      const res = await fetch('http://localhost:3000/shop/get-current-skin-id', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -280,7 +280,7 @@
 
   async function updateSelectedSkin(userId, skinId) {
     try {
-      const res = await fetch('http://localhost:3000/select-skin', {
+      const res = await fetch('http://localhost:3000/shop/select-skin', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -307,7 +307,7 @@
       const equippedSkinId = await getCurrentSkinId(userId);
 
       // Luego obtener todas las skins
-      const res = await fetch("http://localhost:3000/get-skins", {
+      const res = await fetch("http://localhost:3000/shop/get-skins", {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId })
