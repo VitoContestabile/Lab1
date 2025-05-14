@@ -197,7 +197,37 @@
     const data = await res.json();
     document.getElementById("coin-count").textContent = data.coins;
   }
+    async function updateGames(userId) {
+      if (!userId) {
+        console.error("No se proporcionó un userId válido.");
+        return { success: false, message: "El userId es requerido." };
+      }
 
+      try {
+        const response = await fetch("http://localhost:3000/game/update-games", {
+          method: "PUT", // Método PUT para coincidir con la ruta del backend
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({ id: userId }) // Enviamos el id en el cuerpo de la solicitud
+        });
+
+        if (!response.ok) {
+          // Si la respuesta no es exitosa (status !== 2xx)
+          const errorText = await response.text();
+          console.error("Error al actualizar las partidas jugadas:", errorText);
+          return { success: false, message: errorText };
+        }
+
+        // Si la respuesta es exitosa
+        const result = await response.json();
+        console.log("Partidas jugadas actualizadas con éxito:", result.message);
+        return { success: true, message: result.message };
+      } catch (error) {
+        console.error("Error de conexión al actualizar partidas jugadas:", error);
+        return { success: false, message: "Error de conexión al servidor." };
+      }
+    }
 
 
   </script>

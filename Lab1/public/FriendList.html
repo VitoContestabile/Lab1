@@ -3,7 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Tus Amigos</title>
+  <title>Lista de Amigos</title>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
   <style>
     body {
       text-align: center;
@@ -13,7 +14,7 @@
       overflow: hidden;
     }
 
-    #friends-menu {
+    #friends-container {
       position: absolute;
       width: 100%;
       height: 100vh;
@@ -24,36 +25,177 @@
       align-items: center;
       justify-content: center;
       padding: 20px;
+      box-sizing: border-box;
+    }
+
+    .friends-panel {
+      background-color: rgba(0, 0, 0, 0.75);
+      border: 4px solid #ffaa00;
+      border-radius: 10px;
+      padding: 20px;
+      width: 90%;
+      max-width: 800px;
+      max-height: 80vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
     }
 
     h1 {
       font-size: 30px;
       color: white;
       text-shadow: 4px 4px 0px black;
-      margin-bottom: 30px;
+      margin-bottom: 20px;
     }
 
-    ul {
+    .search-bar {
+      display: flex;
+      width: 100%;
+      margin-bottom: 20px;
+      justify-content: center;
+    }
+
+    .search-bar input {
+      background-color: #333;
+      border: 4px solid #ffaa00;
+      color: white;
+      padding: 10px;
+      font-family: 'Press Start 2P', cursive;
+      font-size: 14px;
+      width: 70%;
+      border-radius: 10px;
+      margin-right: 10px;
+    }
+
+    .search-bar button {
+      font-size: 12px;
+      padding: 8px 12px;
+      width: auto;
+    }
+
+    .friends-stats {
+      color: #ffcc00;
+      font-size: 14px;
+      text-shadow: 2px 2px 0px black;
+      margin-bottom: 15px;
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .sort-options {
+      display: flex;
+      margin-bottom: 15px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .sort-options button {
+      font-size: 10px;
+      padding: 8px;
+      margin: 5px;
+      width: auto;
+    }
+
+    .friends-list {
       list-style: none;
       padding: 0;
       margin: 0;
       color: white;
-      font-size: 16px;
-      background-color: rgba(0, 0, 0, 0.5);
-      border: 4px solid #ffaa00;
-      border-radius: 10px;
-      padding: 20px;
-      box-shadow: 4px 4px 0px rgba(0, 0, 0, 0.9);
+      font-size: 14px;
+      width: 100%;
       max-height: 300px;
       overflow-y: auto;
+      border: 3px solid #ffaa00;
+      border-radius: 10px;
+      background-color: rgba(0, 0, 0, 0.5);
     }
 
-    li {
-      margin: 10px 0;
+    .friends-list::-webkit-scrollbar {
+      width: 10px;
+    }
+
+    .friends-list::-webkit-scrollbar-track {
+      background: #333;
+      border-radius: 5px;
+    }
+
+    .friends-list::-webkit-scrollbar-thumb {
+      background: #ffaa00;
+      border-radius: 5px;
+    }
+
+    .friend-item {
+      padding: 12px;
+      margin: 8px;
+      border-radius: 5px;
+      background-color: rgba(50, 50, 50, 0.8);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: transform 0.2s;
+    }
+
+    .friend-item:hover {
+      transform: scale(1.02);
+      background-color: rgba(70, 70, 70, 0.8);
+    }
+
+    .friend-info {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      text-align: left;
+    }
+
+    .friend-name {
+      font-weight: bold;
+      color: #ffcc00;
+      margin-bottom: 5px;
+    }
+
+    .friend-status {
+      font-size: 10px;
+      color: #7FFF7F;
+    }
+
+    .friend-offline {
+      color: #FF7F7F;
+    }
+
+    .friend-actions {
+      display: flex;
+    }
+
+    .friend-actions button {
+      font-size: 10px;
+      padding: 5px 8px;
+      margin: 0 3px;
+      width: auto;
+    }
+
+    .pagination {
+      margin-top: 15px;
+      display: flex;
+      justify-content: center;
+    }
+
+    .pagination button {
+      font-size: 12px;
+      padding: 8px 12px;
+      margin: 0 5px;
+      width: auto;
+    }
+
+    .page-info {
+      color: white;
+      font-size: 12px;
+      margin: 0 10px;
+      display: flex;
+      align-items: center;
     }
 
     button {
-      margin-top: 20px;
       font-size: 16px;
       font-family: 'Press Start 2P', cursive;
       padding: 10px 20px;
@@ -61,8 +203,9 @@
       border: 4px solid #ffaa00;
       border-radius: 10px;
       cursor: pointer;
-      box-shadow: 4px 4px 0px rgba(0, 0, 0, 0.98);
+      box-shadow: 4px 4px 0px rgba(0, 0, 0, 0.9);
       transition: transform 0.1s ease;
+      color: black;
     }
 
     button:hover {
@@ -73,80 +216,294 @@
     button:active {
       transform: scale(0.95);
     }
+
+    .delete-btn {
+      background-color: #ff5555;
+      border-color: #ff3333;
+    }
+
+    .message-btn {
+      background-color: #55aaff;
+      border-color: #3388ff;
+    }
+
+    .empty-list {
+      color: #ffaa00;
+      text-align: center;
+      padding: 30px;
+      font-size: 14px;
+    }
+
+    .controls {
+      margin-top: 20px;
+      display: flex;
+      justify-content: center;
+      width: 100%;
+    }
+
+    /* Responsividad */
+    @media (max-width: 768px) {
+      .friends-panel {
+        width: 95%;
+        padding: 15px;
+      }
+
+      h1 {
+        font-size: 24px;
+      }
+
+      .friend-item {
+        flex-direction: column;
+        align-items: center;
+      }
+
+      .friend-info {
+        align-items: center;
+        margin-bottom: 10px;
+      }
+    }
   </style>
-  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
 </head>
 <body>
-<div id="friends-menu">
-  <h1>Tus Amigos</h1>
-  <ul id="friendsList">
-    <li>Cargando amigos...</li>
-  </ul>
-  <button onclick="volver()">Volver atras</button>
+<div id="friends-container">
+  <div class="friends-panel">
+    <h1>Lista de Amigos</h1>
+
+    <div class="search-bar">
+      <input type="text" id="searchInput" placeholder="Buscar amigo..." oninput="filterFriends()">
+      <button onclick="clearSearch()">Limpiar</button>
+    </div>
+
+    <div class="friends-stats">
+      <span id="totalFriends">Total: 0</span>
+    </div>
+
+    <div class="sort-options">
+      <button onclick="sortFriends('name')">A-Z</button>
+      <button onclick="sortFriends('recent')">Recientes</button>
+    </div>
+
+    <ul class="friends-list" id="friendsList">
+      <li class="empty-list">Cargando amigos...</li>
+    </ul>
+
+    <div class="pagination">
+      <button id="prevPage" onclick="changePage(-1)">Anterior</button>
+      <div class="page-info" id="pageInfo">Página 1 de 1</div>
+      <button id="nextPage" onclick="changePage(1)">Siguiente</button>
+    </div>
+
+    <div class="controls">
+      <button onclick="volver()">Volver</button>
+    </div>
+  </div>
 </div>
 
 <script>
+  // Variables globales
+  let allFriends = [];
+  let filteredFriends = [];
+  let currentPage = 1;
+  const friendsPerPage = 5;
 
-  if(!localStorage.getItem("token")){
-    navigateTo("WebMenu.html")
+  // Verificar autenticación
+  if (!localStorage.getItem("token")) {
+    navigateTo("WebMenu.html");
   }
 
   function navigateTo(page) {
-      window.location.href = page;
+    window.location.href = page;
+  }
+
+  // Inicializar la página
+  window.onload = function() {
+    cargarAmigos();
+  };
+
+  // Parsear JWT
+  function parseJwt(token) {
+    try {
+      const base64Url = token.split('.')[1];
+      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+      const jsonPayload = decodeURIComponent(atob(base64).split('').map(c => {
+        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+      }).join(''));
+      return JSON.parse(jsonPayload);
+    } catch (e) {
+      return null;
     }
+  }
+
+  // Cargar amigos desde el servidor
   function cargarAmigos() {
-    const token = localStorage.getItem("token")
-    const userId = parseJwt(token).userId
+    const token = localStorage.getItem("token");
+    const parsedToken = parseJwt(token);
+    const userId = parsedToken?.userId;
+
     if (!userId) {
       alert("Usuario no logueado");
       return;
     }
+
     fetch("http://localhost:3000/friends/friends", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ userId: userId })
+      body: JSON.stringify({ userId }),
     })
             .then(response => response.json())
             .then(data => {
-              const lista = document.getElementById("friendsList");
-              lista.innerHTML = "";
-
               if (data.friends && data.friends.length > 0) {
-                data.friends.forEach(friend => {
-                  const li = document.createElement("li");
-                  li.textContent = friend;
-                  lista.appendChild(li);
-                });
+                allFriends = data.friends.map(friend => ({
+                  ...friend,
+                }));
+
+                // Actualizar estadísticas
+                updateStats();
+
+                // Aplicar filtros iniciales
+                filteredFriends = [...allFriends];
+                renderFriends();
               } else {
-                const li = document.createElement("li");
-                li.textContent = "No tenés amigos aún :(";
-                lista.appendChild(li);
+                document.getElementById("friendsList").innerHTML =
+                        `<li class="empty-list">No tenés amigos aún :(</li>`;
+                updateStats();
               }
             })
-            .catch(error => {
+            .catch((error) => {
               console.error("Error al obtener amigos:", error);
-              document.getElementById("friendsList").innerHTML = "<li>Error al cargar amigos</li>";
+              document.getElementById("friendsList").innerHTML =
+                      `<li class="empty-list">Error al cargar amigos</li>`;
             });
+  }
+
+  // Actualizar las estadísticas
+  function updateStats() {
+    const total = allFriends.length;
+
+    document.getElementById("totalFriends").textContent = `Total: ${total}`;
+  }
+
+  // Filtrar amigos por búsqueda
+  function filterFriends() {
+    const searchTerm = document.getElementById("searchInput").value.toLowerCase();
+
+    if (searchTerm.trim() === '') {
+      filteredFriends = [...allFriends];
+    } else {
+      filteredFriends = allFriends.filter(friend =>
+              friend.username.toLowerCase().includes(searchTerm)
+      );
+    }
+
+    currentPage = 1;
+    renderFriends();
+  }
+
+  // Limpiar búsqueda
+  function clearSearch() {
+    document.getElementById("searchInput").value = '';
+    filteredFriends = [...allFriends];
+    currentPage = 1;
+    renderFriends();
+  }
+
+  // Ordenar amigos
+  function sortFriends(criteria) {
+    switch(criteria) {
+      case 'name':
+        filteredFriends.sort((a, b) => a.username.localeCompare(b.username));
+        break;
+      case 'recent':
+        filteredFriends.sort((a, b) => b.lastActive - a.lastActive);
+        break;
+    }
+
+    renderFriends();
+  }
+
+  // Cambiar de página
+  function changePage(direction) {
+    const totalPages = Math.ceil(filteredFriends.length / friendsPerPage);
+
+    currentPage += direction;
+
+    if (currentPage < 1) currentPage = 1;
+    if (currentPage > totalPages) currentPage = totalPages;
+
+    renderFriends();
+  }
+
+  // Renderizar la lista de amigos
+  function renderFriends() {
+    const lista = document.getElementById("friendsList");
+    const start = (currentPage - 1) * friendsPerPage;
+    const end = start + friendsPerPage;
+    const pageData = filteredFriends.slice(start, end);
+    const totalPages = Math.max(1, Math.ceil(filteredFriends.length / friendsPerPage));
+
+    // Actualizar navegación de páginas
+    document.getElementById("pageInfo").textContent = `Página ${currentPage} de ${totalPages}`;
+    document.getElementById("prevPage").disabled = currentPage <= 1;
+    document.getElementById("nextPage").disabled = currentPage >= totalPages;
+
+    // Mostrar mensaje si no hay resultados
+    if (pageData.length === 0) {
+      lista.innerHTML = `<li class="empty-list">No se encontraron amigos</li>`;
+      return;
+    }
+
+    // Construir lista de amigos
+    lista.innerHTML = "";
+    pageData.forEach(friend => {
+      const li = document.createElement("li");
+      li.className = "friend-item";
+
+
+      li.innerHTML = `
+        <div class="friend-info">
+          <div class="friend-name">${friend.username}</div>
+        </div>
+        <div class="friend-actions">
+          <button class="delete-btn" onclick="eliminarAmigo('${friend.id}')">Eliminar</button>
+        </div>
+      `;
+
+      lista.appendChild(li);
+    });
+  }
+
+  // Eliminar amigo
+  function eliminarAmigo(friendId) {
+    const token = localStorage.getItem("token");
+    const parsedToken = parseJwt(token);
+    const userId = parsedToken?.userId;
+
+    if (confirm("¿Estás seguro de que quieres eliminar a este amigo?")) {
+      fetch("http://localhost:3000/friends/delete-friend", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId, friendId }),
+      })
+              .then(response => response.json())
+              .then(data => {
+                if (data.message) {
+                  alert(data.message);
+                  cargarAmigos();
+                } else {
+                  alert("Error al eliminar amigo");
+                }
+              })
+              .catch(err => {
+                console.error("Error en la solicitud:", err);
+                alert("Error en la red");
+              });
+    }
   }
 
   function volver() {
     window.location.href = "friends.html";
   }
-        function parseJwt(token) {
-                    try {
-                        const base64Url = token.split('.')[1];
-                        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-                        const jsonPayload = decodeURIComponent(atob(base64).split('').map(c => {
-                            return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-                        }).join(''));
-                        return JSON.parse(jsonPayload);
-                    } catch (e) {
-                        return null;
-                    }
-        }
-
-  // Ejecutar al cargar la página
-  window.onload = cargarAmigos;
 </script>
+
 </body>
 </html>

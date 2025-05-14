@@ -1,15 +1,16 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title>Solicitudes de Amistad</title>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
     <style>
         body {
+            text-align: center;
             font-family: 'Press Start 2P', cursive;
             background-color: skyblue;
             margin: 0;
-            text-align: center;
             overflow: hidden;
         }
 
@@ -23,6 +24,20 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .requests-panel {
+            background-color: rgba(0, 0, 0, 0.75);
+            border: 4px solid #ffaa00;
+            border-radius: 10px;
+            padding: 20px;
+            width: 90%;
+            max-width: 600px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
 
         h1 {
@@ -32,32 +47,81 @@
             margin-bottom: 20px;
         }
 
-        ul {
+        .requests-list {
             list-style: none;
             padding: 0;
+            margin: 0;
             color: white;
+            font-size: 14px;
+            width: 100%;
+            max-height: 300px;
+            overflow-y: auto;
+            border: 3px solid #ffaa00;
+            border-radius: 10px;
+            background-color: rgba(0, 0, 0, 0.5);
+            margin-bottom: 20px;
         }
 
-        li {
-            background-color: rgba(0, 0, 0, 0.6);
-            border: 2px solid #ffaa00;
-            padding: 10px 20px;
+        .requests-list::-webkit-scrollbar {
+            width: 10px;
+        }
+
+        .requests-list::-webkit-scrollbar-track {
+            background: #333;
+            border-radius: 5px;
+        }
+
+        .requests-list::-webkit-scrollbar-thumb {
+            background: #ffaa00;
+            border-radius: 5px;
+        }
+
+        .request-item {
+            padding: 15px;
             margin: 10px;
-            border-radius: 10px;
+            border-radius: 8px;
+            background-color: rgba(50, 50, 50, 0.8);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            transition: transform 0.2s;
+        }
+
+        .request-item:hover {
+            transform: scale(1.02);
+            background-color: rgba(70, 70, 70, 0.8);
+        }
+
+        .request-name {
+            font-weight: bold;
+            color: #ffcc00;
+            margin-bottom: 15px;
             font-size: 16px;
-            text-shadow: 2px 2px 0px black;
+        }
+
+        .request-actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .empty-list {
+            color: #ffaa00;
+            text-align: center;
+            padding: 30px;
+            font-size: 14px;
         }
 
         button {
-            margin-top: 20px;
-            font-size: 16px;
+            font-size: 14px;
             font-family: 'Press Start 2P', cursive;
-            padding: 10px 20px;
+            padding: 8px 15px;
             background-color: #ffcc00;
             border: 4px solid #ffaa00;
             border-radius: 10px;
             cursor: pointer;
-            box-shadow: 4px 4px 0px rgba(0, 0, 0, 0.98);
+            box-shadow: 4px 4px 0px rgba(0, 0, 0, 0.9);
             transition: transform 0.1s ease;
         }
 
@@ -69,59 +133,137 @@
         button:active {
             transform: scale(0.95);
         }
+
+        .accept-btn {
+            background-color: #7FFF7F;
+            border-color: #5FDF5F;
+        }
+
+        .reject-btn {
+            background-color: #FF7F7F;
+            border-color: #DF5F5F;
+        }
+
+        .back-btn {
+            margin-top: 10px;
+            width: 80%;
+            max-width: 300px;
+        }
+
+        #statusMessage {
+            color: #ffcc00;
+            font-size: 14px;
+            text-shadow: 2px 2px 0px black;
+            margin: 10px 0;
+            min-height: 20px;
+        }
+
+        /* Responsividad */
+        @media (max-width: 768px) {
+            .requests-panel {
+                width: 95%;
+                padding: 15px;
+            }
+
+            h1 {
+                font-size: 22px;
+            }
+
+            .request-item {
+                padding: 10px;
+                margin: 8px;
+            }
+
+            .request-name {
+                font-size: 14px;
+            }
+
+            button {
+                font-size: 12px;
+                padding: 6px 12px;
+            }
+        }
     </style>
-    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
 </head>
 <body>
 <div id="friend-requests-container">
-    <h1>Solicitudes de Amistad</h1>
-    <ul id="requestList">
-        <li>Cargando...</li>
-    </ul>
-    <button onclick="location.href='friends.html'">Volver al Menú</button>
+    <div class="requests-panel">
+        <h1>Solicitudes de Amistad</h1>
+        <div id="statusMessage"></div>
+        <ul class="requests-list" id="requestList">
+            <li class="empty-list">Cargando solicitudes...</li>
+        </ul>
+        <button class="back-btn" onclick="location.href='friends.html'">Volver al Menú</button>
+    </div>
 </div>
 
 <script>
-    if(!localStorage.getItem("token")){
-        navigateTo("WebMenu.html")
-  }
+    // Verificar autenticación
+    if(!localStorage.getItem("token")) {
+        navigateTo("WebMenu.html");
+    }
 
     function navigateTo(page) {
-      window.location.href = page;
+        window.location.href = page;
     }
-    const token = localStorage.getItem("token")
-    const userId = parseJwt(token).userId
 
-    fetch('http://localhost:3000/friends/friend-requests', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId })
-    })
-        .then(response => response.json())
-        .then(data => {
-            const list = document.getElementById("requestList");
-            list.innerHTML = ""; // Limpiar
+    // Cargar solicitudes al iniciar
+    window.onload = function() {
+        loadFriendRequests();
+    };
 
-            if (data.requests.length === 0) {
-                list.innerHTML = "<li>No tenés solicitudes pendientes.</li>";
-            } else {
+    function loadFriendRequests() {
+        const token = localStorage.getItem("token");
+        const userId = parseJwt(token).userId;
+        const requestList = document.getElementById("requestList");
+        const statusMessage = document.getElementById("statusMessage");
+
+        // Restablecer mensajes
+        statusMessage.textContent = "";
+
+        fetch('http://localhost:3000/friends/friend-requests', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userId })
+        })
+            .then(response => response.json())
+            .then(data => {
+                requestList.innerHTML = ""; // Limpiar lista
+
+                if (!data.requests || data.requests.length === 0) {
+                    requestList.innerHTML = "<li class='empty-list'>No tenés solicitudes pendientes.</li>";
+                    return;
+                }
+
+                // Mostrar cada solicitud
                 data.requests.forEach(username => {
                     const li = document.createElement("li");
+                    li.className = "request-item";
                     li.innerHTML = `
-                ${username}<br/>
-                <button onclick="responderSolicitud('${username}', true)">Aceptar</button>
-                <button onclick="responderSolicitud('${username}', false)">Rechazar</button>
-            `;
-                    list.appendChild(li);
+            <div class="request-name">${username}</div>
+            <div class="request-actions">
+              <button class="accept-btn" onclick="handleRequest('${username}', true)">Aceptar</button>
+              <button class="reject-btn" onclick="handleRequest('${username}', false)">Rechazar</button>
+            </div>
+          `;
+                    requestList.appendChild(li);
                 });
-            }
-        })
-        .catch(err => {
-            console.error("Error:", err);
-            document.getElementById("requestList").innerHTML = "<li>Error al cargar solicitudes.</li>";
-        });
+            })
+            .catch(err => {
+                console.error("Error:", err);
+                requestList.innerHTML = "<li class='empty-list'>Error al cargar solicitudes.</li>";
+                statusMessage.textContent = "Ocurrió un error al conectar con el servidor.";
+            });
+    }
 
-    function responderSolicitud(username, aceptar) {
+    function handleRequest(username, accept) {
+        const statusMessage = document.getElementById("statusMessage");
+        const token = localStorage.getItem("token");
+        const userId = parseJwt(token).userId;
+
+        // Mostrar estado de la operación
+        statusMessage.textContent = accept ? "Aceptando solicitud..." : "Rechazando solicitud...";
+
         fetch("http://localhost:3000/user/get-user-id", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -130,12 +272,12 @@
             .then(res => res.json())
             .then(data => {
                 if (!data.userId) {
-                    alert("No se pudo encontrar el usuario.");
+                    statusMessage.textContent = "No se pudo encontrar al usuario.";
                     return;
                 }
 
                 const senderId = data.userId;
-                const url = aceptar
+                const url = accept
                     ? 'http://localhost:3000/friends/accept-friend-request'
                     : 'http://localhost:3000/friends/reject-friend-request';
 
@@ -145,29 +287,39 @@
                     body: JSON.stringify({ senderId, receiverId: userId })
                 });
             })
-            .then(res => res.json())
+            .then(res => {
+                if (!res) return; // Para manejar el caso donde no se continuó con la solicitud
+                return res.json();
+            })
             .then(result => {
-                alert(result.message);
-                location.reload(); // Recarga la lista
+                if (result && result.message) {
+                    statusMessage.textContent = result.message;
+
+                    // Recargar la lista después de un breve retraso
+                    setTimeout(() => {
+                        loadFriendRequests();
+                        statusMessage.textContent = "";
+                    }, 1500);
+                }
             })
             .catch(err => {
                 console.error("Error:", err);
-                alert("Ocurrió un error al procesar la solicitud.");
+                statusMessage.textContent = "Ocurrió un error al procesar la solicitud.";
             });
     }
-            function parseJwt(token) {
-                    try {
-                        const base64Url = token.split('.')[1];
-                        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-                        const jsonPayload = decodeURIComponent(atob(base64).split('').map(c => {
-                            return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-                        }).join(''));
-                        return JSON.parse(jsonPayload);
-                    } catch (e) {
-                        return null;
-                    }
-        }
 
+    function parseJwt(token) {
+        try {
+            const base64Url = token.split('.')[1];
+            const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+            const jsonPayload = decodeURIComponent(atob(base64).split('').map(c => {
+                return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+            }).join(''));
+            return JSON.parse(jsonPayload);
+        } catch (e) {
+            return null;
+        }
+    }
 </script>
 </body>
 </html>

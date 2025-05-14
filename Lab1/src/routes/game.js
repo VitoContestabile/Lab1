@@ -18,12 +18,24 @@ router.post("/get-coins", async (req, res) => {
 router.put("/update-score-coins", async (req, res) => {
     const { id, coins, score } = req.body;
     try {
-        await client.query('UPDATE users SET coins = $1, score = $2 WHERE id = $3', [coins, score, id]);
+        await client.query('UPDATE users SET coins = $1, score = $2  WHERE id = $3', [coins, score, id]);
         res.json({ message: "Score y monedas actualizados correctamente" });
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: "Error al actualizar score y monedas" });
     }
 });
+router.put("/update-games", async (req, res) => {
+    const { id } = req.body;
 
+    try {
+        await client.query(
+            'UPDATE users SET games_played = games_played + 1 WHERE id = $1', [id]
+        );
+        res.json({ message: "Juegos jugados actualizados correctamente" });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: "Error al actualizar juegos jugados" });
+    }
+});
 module.exports = router;
