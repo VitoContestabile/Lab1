@@ -3,18 +3,36 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Settings</title>
+    <title>Cambiar Nombre - Plappy Pird</title>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
     <style>
-        /* Fondo de la página */
-        body {
-            text-align: center;
-            font-family: 'Press Start 2P', cursive; /* Fuente pixelada estilo juego retro */
-            background-color: skyblue; /* Fondo azul claro */
-            margin: 0;
-            overflow: hidden;
+        /* Variables para colores consistentes */
+        :root {
+            --primary-color: #ffcc00;
+            --secondary-color: #ffaa00;
+            --dark-accent: #222034;
+            --light-accent: #8bcdff;
+            --sky-bg: #73c8f0;
         }
 
-        /* Contenedor del menú */
+        /* Estilos globales */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        /* Fondo de la página con gradiente */
+        body {
+            text-align: center;
+            font-family: 'Press Start 2P', cursive;
+            background: linear-gradient(to bottom, var(--sky-bg) 0%, #e4f5fd 100%);
+            margin: 0;
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        /* Contenedor principal con animación */
         #settings-container {
             position: absolute;
             width: 100%;
@@ -25,111 +43,229 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
+            animation: fadeIn 0.8s ease-in-out;
         }
 
-        /* Estilo del título */
+        /* Animación para el contenedor */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Título animado */
         h2 {
-            font-size: 50px;
+            font-size: 40px;
             color: white;
-            text-shadow: 4px 4px 0px black; /* Sombra tipo pixelada */
+            text-shadow:
+                    4px 4px 0px var(--dark-accent),
+                    8px 8px 0px rgba(0,0,0,0.2);
             margin-bottom: 30px;
+            transform-origin: center;
+            animation: pulse 3s infinite ease-in-out;
+            letter-spacing: 2px;
         }
 
-        /* Estilo de los checkboxes */
-        label {
-            font-size: 24px;
-            margin: 15px 0;
+        /* Animación para el título */
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        /* Estilo mejorado del campo de entrada */
+        input[type="text"] {
+            width: 280px;
+            background-color: rgba(0, 0, 0, 0.7);
+            border: 3px solid var(--primary-color);
             color: white;
-        }
-
-        input[type="checkbox"] {
-            margin-right: 10px;
-            width: 40px;
-            height: 40px;
-        }
-
-        /* Estilo de los enlaces */
-        a {
-            color: #ffaa00;
-            text-decoration: none;
-            font-size: 20px;
-            text-shadow: 0 0 5px #fff, 0 0 10px #ffaa00;
-            transition: all 0.3s ease-in-out;
-        }
-
-        a:hover {
-            text-shadow: 0 0 10px #fff, 0 0 20px #ffaa00;
-        }
-
-        /* Estilo de los botones */
-        button {
-            font-size: 20px;
+            padding: 16px 20px;
+            margin: 20px 0;
+            border-radius: 10px;
+            font-size: 18px;
             font-family: 'Press Start 2P', cursive;
-            padding: 15px 30px;
-            background-color: #ffcc00;
-            border: 4px solid #ffaa00;
+            outline: none;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+            text-align: center;
+        }
+
+        input[type="text"]:focus {
+            border-color: var(--secondary-color);
+            box-shadow: 0 0 15px var(--primary-color);
+            transform: translateY(-3px);
+        }
+
+        input[type="text"]::placeholder {
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        /* Contenedor de botones para mejor disposición */
+        .button-container {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            margin-top: 20px;
+        }
+
+        /* Estilo mejorado de los botones */
+        button {
+            width: 280px;
+            font-size: 18px;
+            font-family: 'Press Start 2P', cursive;
+            padding: 16px 20px;
+            background-color: var(--primary-color);
+            color: var(--dark-accent);
+            border: none;
             border-radius: 10px;
             cursor: pointer;
-            margin: 10px;
-            box-shadow: 4px 4px 0px black;
-            transition: transform 0.1s ease;
-        }
-        /* Estilo de los campos de entrada */
-        input {
-            background-color: #333;
-            border: 4px solid #ffaa00;
-            color: white;
-            padding: 15px 30px;
-            margin: 10px;
-            border-radius: 10px;
-            font-size: 20px;
-            outline: none;
-            transition: transform 0.1s ease, box-shadow 0.2s;
-        }
-
-        input:focus {
-            box-shadow: 0 0 10px #ffaa00;
+            position: relative;
+            transition: all 0.2s ease;
+            overflow: hidden;
+            box-shadow: 0 4px 0 var(--secondary-color), 0 6px 10px rgba(0,0,0,0.2);
         }
 
         /* Efecto al pasar el mouse */
         button:hover {
-            background-color: #ffaa00;
-            transform: scale(1.05);
+            background-color: var(--secondary-color);
+            transform: translateY(-3px);
+            box-shadow: 0 7px 0 #e99e00, 0 8px 15px rgba(0,0,0,0.3);
         }
 
         /* Efecto al hacer clic */
         button:active {
-            transform: scale(0.95);
+            transform: translateY(3px);
+            box-shadow: 0 2px 0 #e99e00, 0 3px 5px rgba(0,0,0,0.2);
         }
 
-        /* Mensaje de error */
+        /* Botón de volver al menú con estilo diferenciado */
+        button:nth-child(2) {
+            background-color: #8bcdff;
+            box-shadow: 0 4px 0 #73c8f0, 0 6px 10px rgba(0,0,0,0.2);
+        }
+
+        button:nth-child(2):hover {
+            background-color: #73c8f0;
+            box-shadow: 0 7px 0 #5fb4e6, 0 8px 15px rgba(0,0,0,0.3);
+        }
+
+        /* Mensaje de error mejorado */
         .error-message {
-            color: #ff3333;
+            color: #ff6b6b;
             background-color: rgba(0, 0, 0, 0.7);
-            padding: 10px;
-            border-radius: 5px;
-            margin: 10px;
-            font-size: 16px;
+            padding: 12px 20px;
+            border-radius: 10px;
+            margin: 15px 0;
+            font-size: 14px;
             display: none;
+            border: 2px solid #d63031;
+            max-width: 280px;
+            text-shadow: 1px 1px 0px black;
+            animation: shake 0.5s ease-in-out;
+        }
+
+        /* Animación para el mensaje de error */
+        @keyframes shake {
+            0% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            50% { transform: translateX(10px); }
+            75% { transform: translateX(-5px); }
+            100% { transform: translateX(0); }
+        }
+
+        /* Nubes decorativas */
+        .cloud {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.7);
+            border-radius: 50%;
+            z-index: -1;
+        }
+
+        .cloud1 {
+            width: 150px;
+            height: 60px;
+            top: 10%;
+            left: 10%;
+            animation: float 20s infinite linear;
+        }
+
+        .cloud2 {
+            width: 100px;
+            height: 40px;
+            top: 25%;
+            right: 15%;
+            animation: float 15s infinite linear reverse;
+        }
+
+        /* Animación para las nubes */
+        @keyframes float {
+            0% { transform: translateX(0); }
+            50% { transform: translateX(100px); }
+            100% { transform: translateX(0); }
+        }
+
+        /* Icono decorativo de pájaro para los botones */
+        .bird-icon {
+            position: absolute;
+            width: 30px;
+            height: 20px;
+            left: 20px;
+            opacity: 0;
+            transition: opacity 0.3s ease, transform 0.3s ease;
+        }
+
+        button:hover .bird-icon {
+            opacity: 1;
+            transform: translateX(5px);
         }
     </style>
-    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
 </head>
 <body>
+<!-- Elementos decorativos de fondo -->
+<div class="cloud cloud1"></div>
+<div class="cloud cloud2"></div>
+
 <div id="settings-container">
-    <h2>Ingrese Nuevo Nombre</h2>
-    <div>
-        <input type="text" id="username" placeholder="Usuario" required>
-    </div>
+    <h2>Cambiar Nombre</h2>
+
+    <input type="text" id="username" placeholder="Nuevo Nombre" required>
+
     <div id="error" class="error-message"></div>
-    <button onclick="cambiarNombre()">Cambiar Nombre</button>
-    <button onclick="navigateTo('MainMenu.html')">Volver al menú</button>
+
+    <div class="button-container">
+        <button onclick="cambiarNombre()">
+            Confirmar Cambio
+        </button>
+        <button onclick="navigateTo('MainMenu.html')">
+
+            Volver al Menú
+        </button>
+    </div>
 </div>
 
 <script>
-    // Verificar si hay token
-    if(!localStorage.getItem("token")){
-        navigateTo("WebMenu.html");
+    // Verificar si hay token y animación inicial
+    document.addEventListener("DOMContentLoaded", function() {
+        if(!localStorage.getItem("token")){
+            navigateTo("WebMenu.html");
+        }
+
+        // Animación de entrada para los elementos
+        animateElements();
+    });
+
+    // Función para animar los elementos secuencialmente
+    function animateElements() {
+        const elements = document.querySelectorAll('h2, input, button');
+        elements.forEach((element, index) => {
+            element.style.opacity = "0";
+            element.style.transform = "translateY(-20px)";
+
+            setTimeout(() => {
+                element.style.transition = "all 0.3s ease";
+                element.style.opacity = "1";
+                element.style.transform = "translateY(0)";
+            }, 100 * index);
+        });
     }
 
     function navigateTo(page) {
@@ -182,6 +318,15 @@
                         return;
                     }
                     throw new Error(data.message || "Error al cambiar el nombre de usuario");
+                }
+
+                // Efecto visual al cambiar nombre exitosamente
+                document.getElementById("settings-container").style.animation = "fadeIn 0.5s ease-in-out";
+
+                // Mensaje de éxito con estilo de videojuego
+                const successSound = new Audio('success-sound.mp3');
+                if (localStorage.getItem("soundEnabled") === "true") {
+                    successSound.play();
                 }
 
                 alert(data.message);

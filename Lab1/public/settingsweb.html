@@ -4,17 +4,35 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Settings</title>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
     <style>
-        /* Fondo de la página */
-        body {
-            text-align: center;
-            font-family: 'Press Start 2P', cursive; /* Fuente pixelada estilo juego retro */
-            background-color: skyblue; /* Fondo azul claro */
-            margin: 0;
-            overflow: hidden;
+        /* Variables para colores consistentes */
+        :root {
+            --primary-color: #ffcc00;
+            --secondary-color: #ffaa00;
+            --dark-accent: #222034;
+            --light-accent: #8bcdff;
+            --sky-bg: #73c8f0;
         }
 
-        /* Contenedor del menú */
+        /* Estilos globales */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        /* Fondo de la página con gradiente */
+        body {
+            text-align: center;
+            font-family: 'Press Start 2P', cursive;
+            background: linear-gradient(to bottom, var(--sky-bg) 0%, #e4f5fd 100%);
+            margin: 0;
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        /* Contenedor del menú con animación */
         #settings-container {
             position: absolute;
             width: 100%;
@@ -25,120 +43,271 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
+            animation: fadeIn 0.8s ease-in-out;
+            padding: 20px;
+        }
+
+        /* Animación para el menú */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
         /* Estilo del título */
         h2 {
-            font-size: 50px;
+            font-size: 45px;
             color: white;
-            text-shadow: 4px 4px 0px black; /* Sombra tipo pixelada */
+            text-shadow:
+                    4px 4px 0px var(--dark-accent),
+                    8px 8px 0px rgba(0,0,0,0.2);
+            margin-bottom: 40px;
+            animation: glow 2s infinite alternate;
+        }
+
+        @keyframes glow {
+            from { text-shadow: 4px 4px 0px var(--dark-accent), 0 0 10px rgba(255,255,255,0.3); }
+            to { text-shadow: 4px 4px 0px var(--dark-accent), 0 0 30px rgba(255,255,255,0.7); }
+        }
+
+        /* Panel de configuraciones */
+        .settings-panel {
+            background-color: rgba(0, 0, 0, 0.6);
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+            border: 3px solid var(--primary-color);
+            max-width: 500px;
+            width: 90%;
             margin-bottom: 30px;
         }
 
-        /* Estilo de los checkboxes */
+        /* Estilo mejorado de los checkboxes */
         label {
-            font-size: 24px;
-            margin: 15px 0;
+            font-size: 20px;
+            margin: 20px 0;
             color: white;
-        }
-
-        input[type="checkbox"] {
-            margin-right: 10px;
-            width: 30px;
-            height: 30px;
-        }
-
-        /* Estilo de los enlaces */
-        a {
-            color: #ffaa00;
-            text-decoration: none;
-            font-size: 20px;
-            text-shadow: 0 0 5px #fff, 0 0 10px #ffaa00;
-            transition: all 0.3s ease-in-out;
-        }
-
-        a:hover {
-            text-shadow: 0 0 10px #fff, 0 0 20px #ffaa00;
-        }
-
-        /* Estilo de los botones */
-        button {
-            font-size: 20px;
-            font-family: 'Press Start 2P', cursive;
-            padding: 15px 30px;
-            background-color: #ffcc00;
-            border: 4px solid #ffaa00;
-            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             cursor: pointer;
-            margin: 10px;
-            box-shadow: 4px 4px 0px black;
-            transition: transform 0.1s ease;
+            transition: all 0.3s ease;
+        }
+
+        label:hover {
+            color: var(--primary-color);
+        }
+
+        /* Estilizando el checkbox personalizado */
+        .custom-checkbox {
+            position: relative;
+            padding-left: 45px;
+            user-select: none;
+        }
+
+        /* Ocultando el checkbox nativo */
+        .custom-checkbox input {
+            position: absolute;
+            opacity: 0;
+            cursor: pointer;
+            height: 0;
+            width: 0;
+        }
+
+        /* Creando un checkbox personalizado */
+        .checkmark {
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 30px;
+            width: 30px;
+            background-color: #333;
+            border: 3px solid var(--secondary-color);
+            border-radius: 5px;
+        }
+
+        /* Creando la marca de verificación/check */
+        .custom-checkbox input:checked ~ .checkmark:after {
+            content: '';
+            position: absolute;
+            display: block;
+            left: 10px;
+            top: 4px;
+            width: 8px;
+            height: 15px;
+            border: solid var(--primary-color);
+            border-width: 0 4px 4px 0;
+            transform: rotate(45deg);
+            animation: checkAnim 0.3s ease-out;
+        }
+
+        @keyframes checkAnim {
+            0% { opacity: 0; transform: rotate(45deg) scale(0.5); }
+            100% { opacity: 1; transform: rotate(45deg) scale(1); }
+        }
+
+        /* Contenedor de botones */
+        .button-container {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            margin-top: 20px;
+            width: 280px;
+        }
+
+        /* Estilo mejorado de los botones */
+        button {
+            width: 100%;
+            font-size: 18px;
+            font-family: 'Press Start 2P', cursive;
+            padding: 16px 30px;
+            background-color: var(--primary-color);
+            color: var(--dark-accent);
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            position: relative;
+            transition: all 0.2s ease;
+            overflow: hidden;
+        }
+
+        /* Efecto 3D para los botones */
+        button::before {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 6px;
+            background-color: var(--secondary-color);
+            border-bottom-left-radius: 12px;
+            border-bottom-right-radius: 12px;
         }
 
         /* Efecto al pasar el mouse */
         button:hover {
-            background-color: #ffaa00;
-            transform: scale(1.05);
+            background-color: var(--secondary-color);
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
         }
 
         /* Efecto al hacer clic */
         button:active {
-            transform: scale(0.95);
+            transform: translateY(3px);
+            box-shadow: 0 5px 10px rgba(0,0,0,0.2);
         }
-    </style>
-    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
-</head>
-<body>
-    <div id="settings-container">
-        <h2>Configuración</h2>
-        <label>
-            <input type="checkbox" id="sound-checkbox"> Sonido activado
-        </label>
-        <button onclick="location.href='WebMenu.html'">Volver al menú</button>
-    </div>
 
-    <script>
+        /* Nubes decorativas */
+        .cloud {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 50%;
+            z-index: -1;
+        }
 
-        if (localStorage.getItem("token")) {
-            navigateTo("MainMenu.html")
-    }
-        function navigateTo(page) {
-            window.location.href = page;
-    }
+        .cloud1 {
+            width: 150px;
+            height: 60px;
+            top: 10%;
+            left: 10%;
+            animation: float 20s infinite linear;
+        }
 
-        const soundCheckbox = document.getElementById("sound-checkbox");
+        .cloud2 {
+            width: 100px;
+            height: 40px;
+            top: 20%;
+            right: 15%;
+            animation: float 15s infinite linear reverse;
+        }
 
-        // Crear un objeto de audio para el sonido de Flappy Bird
-        const sound = new Audio('./assets/flappybird-sound.mp3'); // Ruta a tu archivo de sonido
+        /* Animación para las nubes */
+        @keyframes float {
+            0% { transform: translateX(0); }
+            50% { transform: translateX(100px); }
+            100% { transform: translateX(0); }
+        }
 
-        // Controlar el estado del sonido
-        let isSoundEnabled = false; // Inicialmente, el sonido está desactivado
+        /* Estilo para menú responsive */
+        @media (max-height: 700px) {
+            h2 {
+                font-size: 35px;
+                margin-bottom: 20px;
+            }
 
-        // Función para activar o desactivar el sonido
-        function toggleSound() {
-            if (soundCheckbox.checked) {
-                if (!isSoundEnabled) {
-                    sound.loop = true;  // Reproducir el sonido en loop
-                    sound.play();
-                    isSoundEnabled = true;
-                }
-            } else {
-                sound.pause();
-                sound.currentTime = 0; // Reiniciar el sonido
-                isSoundEnabled = false;
+            button {
+                padding: 12px 20px;
+                font-size: 16px;
+            }
+
+            .button-container {
+                gap: 10px;
             }
         }
+    </style>
+</head>
+<body>
+<!-- Nubes decorativas -->
+<div class="cloud cloud1"></div>
+<div class="cloud cloud2"></div>
 
-        // Añadir un evento para cambiar el estado del sonido
-        soundCheckbox.addEventListener("change", toggleSound);
+<div id="settings-container">
+    <h2>Configuración</h2>
 
-        // Asegurarse de que el sonido esté desactivado cuando se cargue la página si el checkbox está desmarcado
-        window.onload = () => {
-            if (soundCheckbox.checked) {
+    <div class="settings-panel">
+        <label class="custom-checkbox">
+            <span>Sonido activado</span>
+            <input type="checkbox" id="sound-checkbox">
+            <span class="checkmark"></span>
+        </label>
+    </div>
+
+    <div class="button-container">
+        <button onclick="location.href='WebMenu.html'">Volver al menú</button>
+    </div>
+</div>
+
+<script>
+    if (localStorage.getItem("token")) {
+        navigateTo("MainMenu.html")
+    }
+
+    function navigateTo(page) {
+        window.location.href = page;
+    }
+
+    const soundCheckbox = document.getElementById("sound-checkbox");
+
+    // Crear un objeto de audio para el sonido de Flappy Bird
+    const sound = new Audio('./assets/flappybird-sound.mp3'); // Ruta a tu archivo de sonido
+
+    // Controlar el estado del sonido
+    let isSoundEnabled = false; // Inicialmente, el sonido está desactivado
+
+    // Función para activar o desactivar el sonido
+    function toggleSound() {
+        if (soundCheckbox.checked) {
+            if (!isSoundEnabled) {
+                sound.loop = true;  // Reproducir el sonido en loop
                 sound.play();
                 isSoundEnabled = true;
             }
-        };
-    </script>
+        } else {
+            sound.pause();
+            sound.currentTime = 0; // Reiniciar el sonido
+            isSoundEnabled = false;
+        }
+    }
+
+    // Añadir un evento para cambiar el estado del sonido
+    soundCheckbox.addEventListener("change", toggleSound);
+
+    // Asegurarse de que el sonido esté desactivado cuando se cargue la página si el checkbox está desmarcado
+    window.onload = () => {
+        if (soundCheckbox.checked) {
+            sound.play();
+            isSoundEnabled = true;
+        }
+    };
+</script>
 </body>
 </html>
