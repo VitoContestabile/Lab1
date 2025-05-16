@@ -43,7 +43,8 @@ client.query(`
     password VARCHAR(255) NOT NULL,
     coins INT DEFAULT 0,
     score INT DEFAULT 0,
-    is_admin BOOLEAN DEFAULT FALSE-- Agregar el campo score
+    is_admin BOOLEAN DEFAULT FALSE,-- Agregar el campo score
+    games_played INT DEFAULT 0  
   )
 `, (err, res) => {
   if (err) {

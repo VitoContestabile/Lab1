@@ -87,7 +87,7 @@
     <div id="score" class="score">Puntaje: 0</div>
     <div id="coins-earned" class="coins-earned"></div>
     <div id="new-record" class="new-record"></div>
-    <button onclick="playAgain()">Jugar de nuevo</button>
+    <button onclick="backToGameMode()">Jugar de nuevo</button>
     <button onclick="backToMenu()">Menu Principal</button>
     <div id="coin-display">
       <img src="coin.jpg" alt="Moneda" />
@@ -130,7 +130,7 @@
         }
 
         if(monedasGanadas<1){
-          document.getElementById("coins-earned").textContent = `No ganaste nada choto 8====D`;
+          document.getElementById("coins-earned").textContent = `No ganaste nada malo`;
         }
         else{
           document.getElementById("coins-earned").textContent = `¡Ganaste ${monedasGanadas} monedas!`;
@@ -164,6 +164,9 @@
 
     function backToMenu() {
       window.location.href = 'MainMenu.html';
+    }
+    function backToGameMode() {
+      window.location.href = 'play.html';
     }
 
     function parseJwt(token) {
