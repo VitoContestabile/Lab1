@@ -333,7 +333,7 @@
     // Función para cerrar sesión
     function logout() {
         localStorage.removeItem('token');
-        window.location.href = 'login.html';
+        window.location.href = 'WebMenu.html';
     }
 
     // Inicializar al cargar la página
@@ -341,7 +341,7 @@
         const token = localStorage.getItem('token');
         if (!token) {
             alert('No has iniciado sesión');
-            window.location.href = 'login.html';
+            window.location.href = 'WebMenu.html';
             return;
         }
 
