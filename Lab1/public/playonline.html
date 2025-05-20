@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Plappy Pird - Lobby</title>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary-color: #ffcc00;
+      --secondary-color: #ffaa00;
+      --dark-accent: #222034;
+      --sky-bg: #73c8f0;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Press Start 2P', cursive;
+      background: linear-gradient(to bottom, var(--sky-bg) 0%, #e4f5fd 100%);
+      overflow: hidden;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    #lobby-menu, #create-form, #join-form {
+      position: absolute;
+      width: 100%;
+      max-width: 600px;
+      text-align: center;
+      animation: fadeIn 0.8s ease-in-out;
+    }
+
+    h1 {
+      font-size: 32px;
+      color: white;
+      text-shadow: 4px 4px 0px var(--dark-accent);
+      margin-bottom: 40px;
+    }
+
+    .button-container {
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    button {
+      font-size: 14px;
+      font-family: 'Press Start 2P', cursive;
+      padding: 16px 20px;
+      background-color: var(--primary-color);
+      color: var(--dark-accent);
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: 0 4px 0 var(--secondary-color), 0 6px 10px rgba(0,0,0,0.2);
+    }
+
+    button:hover {
+      background-color: var(--secondary-color);
+      transform: translateY(-3px);
+    }
+
+    button:active {
+      transform: translateY(3px);
+    }
+
+    form {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      margin-top: 30px;
+      align-items: center;
+    }
+
+    input {
+      padding: 12px;
+      font-size: 16px;
+      border: 2px solid var(--dark-accent);
+      border-radius: 8px;
+      width: 80%;
+      max-width: 300px;
+      font-family: 'Press Start 2P', cursive;
+    }
+
+    .back-btn {
+      margin-top: 30px;
+      font-size: 12px;
+      background-color: #ffffff;
+      color: var(--dark-accent);
+      border: 2px dashed var(--dark-accent);
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Menú principal -->
+<div id="lobby-menu">
+  <h1>Lobby</h1>
+  <div class="button-container">
+    <button onclick="function showCreate() {
+      
+
+    }
+    showCreate()">Create Lobby</button>
+    <button onclick="function showJoin() {
+
+    }
+    showJoin()">Join Lobby</button>
+    <button onclick="function goBackMenu() {
+      location.href = 'MainMenu.html';
+
+    }
+    goBackMenu()">Volver</button>
+  </div>
+</div>
+
+<!-- Formulario crear lobby -->
+<div id="create-form" style="display: none;">
+  <h1>Create Lobby</h1>
+  <form onsubmit="event.preventDefault(); createLobby();">
+    <input type="text" placeholder="Tu nombre" required />
+    <button type="submit">Crear</button>
+  </form>
+  <button class="back-btn" onclick="goBack()">Volver</button>
+</div>
+
+<!-- Formulario unirse a lobby -->
+<div id="join-form" style="display: none;">
+  <h1>Join Lobby</h1>
+  <form onsubmit="event.preventDefault(); joinLobby();">
+    <input type="text" placeholder="Tu nombre" required />
+    <input type="text" placeholder="Código de Lobby" required />
+    <button type="submit">Unirse</button>
+  </form>
+  <button class="back-btn" onclick="function goBack() {
+  location.href = 'playonline.html';
+  }
+  goBack()">Volver</button>
+</div>
+</body>
+
+</html>
