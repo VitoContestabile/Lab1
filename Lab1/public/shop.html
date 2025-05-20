@@ -159,25 +159,44 @@
       }
     }
 
-    #coin-display {
-              position: fixed;
-              bottom: 20px;
-              right: 20px;
-              display: flex;
-              align-items: center;
-              background: rgba(255, 255, 255, 0.9);
-              border-radius: 10px;
-              padding: 6px 10px;
-              box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-              font-family: Arial, sans-serif;
-              font-size: 16px;
-            }
+        #coin-display {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            display: flex;
+            align-items: center;
+            background: linear-gradient(135deg, #ffd700, #ffaa00);
+            border-radius: 25px;
+            padding: 8px 15px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+            font-family: 'Press Start 2P', cursive;
+            font-size: 16px;
+            border: 3px solid #fff;
+            color: var(--dark-accent);
+            animation: shimmer 2s infinite alternate;
+        }
 
-            #coin-display img {
-              width: 24px;
-              height: 24px;
-              margin-right: 6px;
-            }
+        /* Animación para el contador de monedas */
+        @keyframes shimmer {
+            from { box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3); }
+            to { box-shadow: 0 4px 15px rgba(255, 215, 0, 0.7); }
+        }
+
+        #coin-display img {
+            width: 28px;
+            height: 28px;
+            margin-right: 10px;
+            animation: spin 10s infinite linear;
+            border-radius: 50%;
+            border: 2px solid #fff;
+        }
+
+        /* Animación para la moneda */
+        @keyframes spin {
+            0% { transform: rotateY(0deg); }
+            100% { transform: rotateY(360deg); }
+        }
+
   </style>
 </head>
 <body>
@@ -190,7 +209,7 @@
     <!-- Las skins se cargarán aquí dinámicamente -->
   </div>
     <div id="coin-display">
-      <img src="/assets/coin.jpg" alt="Moneda" />
+      <img src="assets/coin.jpg" alt="Moneda" />
       <span id="coin-count">0</span>
     </div>
 

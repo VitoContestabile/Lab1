@@ -1,34 +1,12 @@
-document.addEventListener("DOMContentLoaded", () => {
-    const startButton = document.getElementById("start-button");
-    const startScreen = document.getElementById("start-screen");
-    const canvas = document.getElementById("board");
 
-    // Check if auto-start is enabled
-    const autoStart = localStorage.getItem('autoStart');
 
-    if (autoStart === 'true') {
-        // Remove the auto-start flag
-        localStorage.removeItem('autoStart');
-
-        // Automatically start the game
-        startScreen.style.display = "none";
-        canvas.style.display = "block";
-        startGame();
-    } else {
-        // Normal start button behavior
-        startButton.addEventListener("click", () => {
-            startScreen.style.display = "none";
-            canvas.style.display = "block";
-            startGame();
-        });
-    }
-});
 
 // Rest of the code remains the same as in the previous version
 // (The entire previous flappybird.js code stays unchanged)
 
 // Variables globales
-let board, ctx;
+window.board = document.getElementById("board");
+window.ctx = board.getContext("2d");
 let boardWidth = 360, boardHeight = 640;
 
 // Bird
@@ -215,3 +193,5 @@ function detectCollision(a, b) {
         a.y < b.y + b.height &&
         a.y + a.height > b.y;
 }
+
+startGame();

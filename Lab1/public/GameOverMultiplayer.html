@@ -28,14 +28,15 @@
     h1 {
       font-size: 50px;
       color: white;
-      text-shadow: 4px 4px 0px black;
-      margin-bottom: 30px;
-    }
-    .score, .coins-earned, .new-record {
-      font-size: 25px;
-      color: white;
       margin-bottom: 20px;
       text-shadow: 2px 2px 0px black;
+    }
+    .new-record {
+
+      font-size: 70px;
+      color: white;
+      text-shadow: 4px 4px 0px black;
+      margin-bottom: 30px;
     }
     button {
       width: 250px;
@@ -102,8 +103,6 @@
 <body>
   <div id="game-over">
     <h1>Game Over</h1>
-    <div id="score" class="score">Puntaje: 0</div>
-    <div id="coins-earned" class="coins-earned"></div>
     <div id="new-record" class="new-record"></div>
     <button onclick="playAgain()">Jugar de nuevo</button>
     <button onclick="backToMenu()">Menu Principal</button>
@@ -121,7 +120,6 @@
       if (!token) return navigateTo("WebMenu.html");
 
       const score = parseInt(localStorage.getItem('lastScore') || 0);
-      document.getElementById('score').textContent = `Puntaje: ${score}`;
 
       const userId = parseJwt(token).userId;
 
@@ -130,56 +128,13 @@
       if (!userId) return navigateTo("WebMenu.html");
 
       try {
-        const res = await fetch('http://localhost:3000/user/get-user', {
-          method: 'POST',
-          headers: {
-                    'Content-Type': 'application/json'
-                },
-          body: JSON.stringify({ id: userId })
-        });
 
-        const user = await res.json();
-        console.log(user.score)
-        const monedasGanadas = Math.floor(score / 5);
-        const nuevoRecord = score > user.score;
+        const winner= localStorage.getItem('winner');
 
-        if (nuevoRecord) {
-          document.getElementById("new-record").textContent = "¡Nuevo récord personal!";
-        }
+          document.getElementById("new-record").textContent = winner;
 
-        if(monedasGanadas<1){
-          document.getElementById("coins-earned").textContent = `No ganaste nada choto 8====D`;
-        }
-        else{
-          document.getElementById("coins-earned").textContent = `¡Ganaste ${monedasGanadas} monedas!`;
-        }
-        // Mostrar en pantalla
-
-
-
-        // Actualizar en base de datos
-        await fetch('http://localhost:3000/game/update-score-coins', {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({
-            id: userId,
-            coins: user.coins + monedasGanadas,
-            score: nuevoRecord ? score : user.score
-          })
-        });
-        await fetch('http://localhost:3000/game/update-games', {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({
-            id: userId
-          })
-        });
       } catch (err) {
-        console.error("Error al actualizar datos:", err);
+        console.error("Error", err);
       }
 
     }
@@ -224,37 +179,6 @@
     const data = await res.json();
     document.getElementById("coin-count").textContent = data.coins;
   }
-    async function updateGames(userId) {
-      if (!userId) {
-        console.error("No se proporcionó un userId válido.");
-        return { success: false, message: "El userId es requerido." };
-      }
-
-      try {
-        const response = await fetch("http://localhost:3000/game/update-games", {
-          method: "PUT", // Método PUT para coincidir con la ruta del backend
-          headers: {
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({ id: userId }) // Enviamos el id en el cuerpo de la solicitud
-        });
-
-        if (!response.ok) {
-          // Si la respuesta no es exitosa (status !== 2xx)
-          const errorText = await response.text();
-          console.error("Error al actualizar las partidas jugadas:", errorText);
-          return { success: false, message: errorText };
-        }
-
-        // Si la respuesta es exitosa
-        const result = await response.json();
-        console.log("Partidas jugadas actualizadas con éxito:", result.message);
-        return { success: true, message: result.message };
-      } catch (error) {
-        console.error("Error de conexión al actualizar partidas jugadas:", error);
-        return { success: false, message: "Error de conexión al servidor." };
-      }
-    }
 
 
   </script>

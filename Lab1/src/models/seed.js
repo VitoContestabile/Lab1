@@ -1,5 +1,5 @@
 // models/seed.js
-const client = require('../config/db');
+const {client} = require('../config/db');
 
 // Función para insertar una skin si no existe
 const insertSkin = async (name, imageUrl, price, rarity) => {

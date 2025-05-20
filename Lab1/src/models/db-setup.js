@@ -1,6 +1,5 @@
 // models/db-setup.js
-const client = require('../config/db');
-
+const { client } = require('../config/db');
 // Función para inicializar todas las tablas de la base de datos
 const setupDatabase = async () => {
     try {

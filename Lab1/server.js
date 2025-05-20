@@ -1,27 +1,31 @@
-require('dotenv').config(); // ← esta línea debe estar antes de todo lo que use process.env
+require('dotenv').config();
 
 const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
+
 const { connectDB } = require('./src/config/db.js');
+const { setupDatabase } = require('./src/models/db-setup.js');
+const {seedData} = require('./src/models/seed.js');
 const routes = require('./src/routes');
 
-// Crear la aplicación Express
 const app = express();
 const port = process.env.PORT || 3000;
 
-// Middleware
 app.use(cors());
 app.use(bodyParser.json());
 app.use(express.static('public'));
 
-// Inicializar la conexión a la base de datos
-connectDB();
+async function startServer() {
+    await connectDB();         // ✅ esperar conexión
+    await setupDatabase();// ✅ luego configurar tablas
+    await seedData();
 
-// Registrar todas las rutas
-app.use('/', routes);
+    app.use('/', routes);
 
-// Iniciar el servidor
-app.listen(port, () => {
-    console.log(`Servidor escuchando en el puerto ${port}`);
-});
+    app.listen(port, () => {
+        console.log(`Servidor escuchando en el puerto ${port}`);
+    });
+}
+
+startServer(); // 🚀 inicia todo
