@@ -135,6 +135,35 @@ router.get('/perfil/:username', async (req, res) => {
     }
 });
 
+router.get('/perfil/:username', async (req, res) => {
+    const { username } = req.params;
+
+    try {
+        // Consulta a la base de datos para obtener los datos del usuario
+        const query = 'SELECT username, score, coins, is_admin, games_played FROM users WHERE username = $1';
+        const result = await client.query(query, [username]);
+
+        if (result.rows.length === 0) {
+            return res.status(404).json({ message: 'Usuario no encontrado' });
+        }
+
+        const user = result.rows[0];
+
+        // Responde con los datos del usuario
+        return res.json({
+            username: user.username,
+            score: user.score,
+            coins: user.coins,
+            is_admin: user.is_admin,
+            games_played: user.games_played
+        });
+    } catch (error) {
+        console.error('Error al obtener el perfil:', error);
+        res.status(500).json({ message: 'Error en el servidor' });
+    }
+});
+
+
 // Obtener ranking de usuarios
 router.get('/ranking', async (req, res) => {
     try {

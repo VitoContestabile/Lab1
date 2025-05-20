@@ -112,6 +112,7 @@
             align-items: center;
         }
 
+        .form-group input[type="email"],
         .form-group input[type="text"],
         .form-group input[type="password"] {
             padding: 10px;
@@ -151,6 +152,7 @@
         <h2>Crear Nuevo Usuario</h2>
         <div class="form-group">
             <input type="text" id="new-username" placeholder="Nombre de usuario">
+            <input type="email" id="new-email" placeholder="E-mail">
             <input type="password" id="new-password" placeholder="Contraseña">
             <div class="checkbox-container">
                 <input type="checkbox" id="is-admin">
@@ -284,6 +286,7 @@
     // Función para crear un nuevo usuario
     function createUser() {
         const username = document.getElementById('new-username').value;
+        const email = document.getElementById('new-email').value;
         const password = document.getElementById('new-password').value;
         const isAdmin = document.getElementById('is-admin').checked;
 
@@ -303,6 +306,7 @@
             body: JSON.stringify({
                 username,
                 password,
+                email,
                 isAdmin
             })
         })
@@ -319,6 +323,7 @@
                 // Limpiar campos
                 document.getElementById('new-username').value = '';
                 document.getElementById('new-password').value = '';
+                document.getElementById('new-email').value='';
                 document.getElementById('is-admin').checked = false;
 
                 // Recargar lista de usuarios
@@ -333,7 +338,7 @@
     // Función para cerrar sesión
     function logout() {
         localStorage.removeItem('token');
-        window.location.href = 'login.html';
+        window.location.href = 'WebMenu.html';
     }
 
     // Inicializar al cargar la página

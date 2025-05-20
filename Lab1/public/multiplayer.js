@@ -224,15 +224,13 @@ function drawBoundaries() {
 
 async function loadBirdSkin(userId, playerIndex) {
     try {
-        if (!userId && playerIndex === 0) {
-            // Default skin for player 1
-            return "./assets/flappybird.png";
-        } else if (playerIndex === 1) {
+
+        if (playerIndex === 1) {
             // Different skin for player 2
             return "./assets/flappybird.png";
         }
 
-        const res = await fetch("http://localhost:3000/get-current-skin-image", {
+        const res = await fetch("http://localhost:3000/shop/get-current-skin-image", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json"

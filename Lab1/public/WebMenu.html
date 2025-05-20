@@ -232,6 +232,29 @@
             animation: float 15s infinite linear reverse;
         }
 
+        /* Pájaros volando en el fondo */
+        .flying-bird {
+            position: absolute;
+            left: -50px; /* <- asegura que comiencen fuera de la pantalla */
+            width: 30px;
+            height: 20px;
+            background: url('assets/flappybird.png') no-repeat center center;
+            background-size: contain;
+            z-index: -1;
+            animation: fly 25s infinite linear;
+        }
+
+        .bird1 { top: 15%; animation-duration: 30s; }
+        .bird2 { top: 35%; animation-delay: 5s; animation-duration: 20s; }
+        .bird3 { top: 25%; animation-delay: 10s; animation-duration: 35s; }
+
+        @keyframes fly {
+            0% { left: -50px; transform: translateY(0); }
+            50% { transform: translateY(30px); }
+            100% { left: calc(100% + 50px); transform: translateY(0); }
+        }
+
+
         /* Animación para las nubes */
         @keyframes float {
             0% { transform: translateX(0); }
@@ -266,6 +289,15 @@
     </style>
 </head>
 <body>
+<!-- Elementos decorativos de fondo -->
+<div class="cloud cloud1"></div>
+<div class="cloud cloud2"></div>
+<div class="flying-bird bird1"></div>
+<div class="flying-bird bird2"></div>
+<div class="flying-bird bird3"></div>
+<div class="pipe-decoration">
+    <div class="pipe-top"></div>
+</div>
 <!-- Nubes decorativas -->
 <div class="cloud cloud1"></div>
 <div class="cloud cloud2"></div>

@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Plappy Pird - Lobby</title>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #ffcc00;
+            --secondary-color: #ffaa00;
+            --dark-accent: #222034;
+            --sky-bg: #73c8f0;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Press Start 2P', cursive;
+            background: linear-gradient(to bottom, var(--sky-bg) 0%, #e4f5fd 100%);
+            overflow: hidden;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #lobby-menu {
+            text-align: center;
+            animation: fadeIn 0.8s ease-in-out;
+            max-width: 600px;
+            width: 100%;
+        }
+
+        h1 {
+            font-size: 32px;
+            color: white;
+            text-shadow: 4px 4px 0px var(--dark-accent);
+            margin-bottom: 40px;
+        }
+
+        .button-container {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        button {
+            font-size: 14px;
+            font-family: 'Press Start 2P', cursive;
+            padding: 16px 20px;
+            background-color: var(--primary-color);
+            color: var(--dark-accent);
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 0 var(--secondary-color), 0 6px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        button:hover {
+            background-color: var(--secondary-color);
+            transform: translateY(-3px);
+        }
+
+        button:active {
+            transform: translateY(3px);
+        }
+
+        input {
+            padding: 10px;
+            font-family: 'Press Start 2P', cursive;
+            font-size: 12px;
+            border-radius: 8px;
+            border: 2px solid var(--dark-accent);
+            width: 80%;
+            max-width: 300px;
+            margin-top: 16px;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</head>
+<body>
+
+<!-- Menú principal -->
+<div id="lobby-menu">
+    <h1>Lobby</h1>
+    <div class="button-container">
+        <button onclick="createLobby()">Create Lobby</button>
+        <button onclick="showJoin()">Join Lobby</button>
+        <button onclick="goBackMenu()">Volver</button>
+    </div>
+
+    <!-- Contenedor para input de Join Lobby -->
+    <div id="join-lobby-container"></div>
+</div>
+
+<script>
+    const token = localStorage.getItem("token");
+    if (!token) {
+        location.href = "WebMenu.html";
+    }
+
+    function parseJwt(token) {
+        try {
+            const base64Url = token.split('.')[1];
+            const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+            const jsonPayload = decodeURIComponent(atob(base64).split('').map(c => {
+                return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+            }).join(''));
+            return JSON.parse(jsonPayload);
+        } catch (e) {
+            return null;
+        }
+    }
+
+    const parsedToken = parseJwt(token);
+    let userId;
+
+    if (parsedToken) {
+        userId = parsedToken.userId;
+    } else {
+        location.href = "WebMenu.html";
+    }
+
+    async function createLobby() {
+        try {
+            if (!userId) {
+                alert("Usuario no encontrado");
+                return;
+            }
+
+            const resLobby = await fetch('http://localhost:3000/lobby/create_lobby', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({myId: userId})
+            });
+
+            const data = await resLobby.json();
+
+            if (data.success) {
+                localStorage.setItem("lobbyId", data.lobby.lobby_id);
+                location.href = "lobby.html";
+            } else {
+                alert("Error al crear lobby: " + data.message);
+            }
+
+        } catch (err) {
+            console.error(err);
+            alert("Error del servidor o de red.");
+        }
+    }
+
+    async function showJoin() {
+        const container = document.getElementById("join-lobby-container");
+        container.innerHTML = `
+            <input id="lobby-id-input" type="text" placeholder="Enter Lobby ID">
+            <br>
+            <button onclick="joinLobby()" style="margin-top: 12px;">Confirm Join</button>
+        `;
+    }
+
+    async function joinLobby() {
+      const lobbyId = document.getElementById("lobby-id-input").value.trim();
+
+      if (!lobbyId) {
+        alert("Por favor ingresa un Lobby ID.");
+        return;
+      }
+
+      localStorage.setItem("lobbyId", lobbyId);
+
+      const lobby_id = parseInt(localStorage.getItem("lobbyId"));
+      try {
+        if (!userId) {
+          alert("Usuario no encontrado");
+          return;
+        }
+
+        const resLobby = await fetch('http://localhost:3000/lobby/join_lobby', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({myId: userId, lobby_id: lobby_id})
+        });
+
+        const data = await resLobby.json();
+
+        if (data.success) {
+          location.href = "lobby.html";
+        } else {
+          alert("Error al unirse lobby: " + data.message);
+        }
+
+      } catch (err) {
+        console.error(err);
+        alert("Error del servidor o de red.");
+      }
+
+    }
+
+    function goBackMenu() {
+        location.href = 'MainMenu.html';
+    }
+</script>
+
+</body>
+</html>
