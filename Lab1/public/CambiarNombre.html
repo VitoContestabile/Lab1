@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cambiar Nombre - Plappy Pird</title>
+    <script src="/env.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
     <style>
         /* Variables para colores consistentes */
@@ -243,6 +244,7 @@
 </div>
 
 <script>
+    const BASE_URL = window.ENV.BASE_URL;
     // Verificar si hay token y animación inicial
     document.addEventListener("DOMContentLoaded", function() {
         if(!localStorage.getItem("token")){
@@ -298,7 +300,7 @@
             return;
         }
 
-        fetch('http://localhost:3000/user/update-username', {
+        fetch(`${BASE_URL}/user/update-username`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',

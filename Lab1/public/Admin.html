@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Panel de Administrador - Flappy Bird</title>
+    <script src="/env.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
     <style>
         body {
@@ -177,11 +178,12 @@
 </div>
 
 <script>
+    const BASE_URL = window.ENV.BASE_URL;
     // Función para cargar usuarios
     function loadUsers() {
         const token = localStorage.getItem('token');
 
-        fetch('http://localhost:3000/admin/users', {
+        fetch(`${BASE_URL}/admin/users`, {
             method: 'GET',
             headers: {
                 'Authorization': `Bearer ${token}`,
@@ -261,7 +263,7 @@
     function toggleFreeze(userId) {
         const token = localStorage.getItem('token');
 
-        fetch('http://localhost:3000/admin/toggle-freeze', {
+        fetch(`${BASE_URL}/admin/toggle-freeze`, {
             method: 'POST',
             headers: {
                 'Authorization': `Bearer ${token}`,
@@ -294,7 +296,7 @@
 
         const token = localStorage.getItem('token');
 
-        fetch('http://localhost:3000/admin/create-user', {
+        fetch(`${BASE_URL}/admin/create-user`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',

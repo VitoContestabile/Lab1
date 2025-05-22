@@ -4,6 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title>Perfil - Plappy Pird</title>
+    <script src="/env.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
     <style>
         body {
@@ -274,6 +275,7 @@
 </div>
 
 <script>
+    const BASE_URL = window.ENV.BASE_URL;
     const params = new URLSearchParams(window.location.search);
     const username = params.get('username');
     console.log("Username recibido:", username);
@@ -286,7 +288,7 @@
         document.getElementById('perfil-score-big').textContent = "0";
         document.getElementById('perfil-coins-big').textContent = "0";
     } else {
-        fetch(`http://localhost:3000/user/perfil/${encodeURIComponent(username)}`)
+        fetch(`${BASE_URL}/user/perfil/${encodeURIComponent(username)}`)
             .then(res => {
                 if (!res.ok) throw new Error("Error HTTP " + res.status);
                 return res.json();

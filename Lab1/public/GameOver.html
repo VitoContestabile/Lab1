@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Game Over - Plappy Pird</title>
+  <script src="/env.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="flappybird.css">
   <style>
@@ -114,6 +115,7 @@
   </div>
 
   <script>
+    const BASE_URL = window.ENV.BASE_URL;
 
 
     async function main() {
@@ -130,7 +132,7 @@
       if (!userId) return navigateTo("WebMenu.html");
 
       try {
-        const res = await fetch('http://localhost:3000/user/get-user', {
+        const res = await fetch(`${BASE_URL}/user/get-user`, {
           method: 'POST',
           headers: {
                     'Content-Type': 'application/json'
@@ -158,7 +160,7 @@
 
 
         // Actualizar en base de datos
-        await fetch('http://localhost:3000/game/update-score-coins', {
+        await fetch(`${BASE_URL}/game/update-score-coins`, {
           method: "PUT",
           headers: {
             "Content-Type": "application/json"
@@ -169,7 +171,7 @@
             score: nuevoRecord ? score : user.score
           })
         });
-        await fetch('http://localhost:3000/game/update-games', {
+        await fetch(`${BASE_URL}/game/update-games`, {
           method: "PUT",
           headers: {
             "Content-Type": "application/json"
@@ -213,7 +215,7 @@
     window.onload = main;
 
   async function updateCoinDisplay(userId) {
-    const res = await fetch('http://localhost:3000/game/get-coins', {
+    const res = await fetch(`${BASE_URL}/game/get-coins`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -231,7 +233,7 @@
       }
 
       try {
-        const response = await fetch("http://localhost:3000/game/update-games", {
+        const response = await fetch(`${BASE_URL}/game/update-games`, {
           method: "PUT", // Método PUT para coincidir con la ruta del backend
           headers: {
             "Content-Type": "application/json"

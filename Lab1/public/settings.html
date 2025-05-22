@@ -4,6 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Settings</title>
+    <script src="/env.js"></script>
+    <script>
+        const BASE_URL = window.ENV.BASE_URL;
+    </script>
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
     <style>
         /* Variables para colores consistentes */
@@ -349,7 +353,7 @@
         const userId = parseJwt(token).userId;
 
         async function updateCoinDisplay(userId) {
-            const res = await fetch('http://localhost:3000/user/get-coins', {
+            const res = await fetch(`${BASE_URL}/user/get-coins`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'

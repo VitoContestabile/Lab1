@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Mis Skins - Plappy Pird</title>
+  <script src="/env.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet" />
   <style>
     body {
@@ -213,6 +214,7 @@
 </div>
 
 <script>
+  const BASE_URL = window.ENV.BASE_URL;
   // Verificar el token al cargar
   document.addEventListener("DOMContentLoaded", async function () {
     if (!localStorage.getItem("token")) {
@@ -256,7 +258,7 @@
 
   async function updateCoinDisplay(userId) {
     try {
-      const res = await fetch('http://localhost:3000/game/get-coins', {
+      const res = await fetch(`${BASE_URL}/game/get-coins`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -277,7 +279,7 @@
 
   async function getCurrentSkinId(userId) {
     try {
-      const res = await fetch('http://localhost:3000/shop/get-current-skin-id', {
+      const res = await fetch(`${BASE_URL}/shop/get-current-skin-id`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -299,7 +301,7 @@
 
   async function updateSelectedSkin(userId, skinId) {
     try {
-      const res = await fetch('http://localhost:3000/shop/select-skin', {
+      const res = await fetch(`${BASE_URL}/shop/select-skin`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -326,7 +328,7 @@
       const equippedSkinId = await getCurrentSkinId(userId);
 
       // Luego obtener todas las skins
-      const res = await fetch("http://localhost:3000/shop/get-skins", {
+      const res = await fetch(`${BASE_URL}/shop/get-skins`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId })

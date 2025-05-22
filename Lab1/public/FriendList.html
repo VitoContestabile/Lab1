@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Lista de Amigos</title>
+  <script src="/env.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
   <style>
     body {
@@ -300,6 +301,7 @@
 </div>
 
 <script>
+  const BASE_URL = window.ENV.BASE_URL;
   // Variables globales
   let allFriends = [];
   let filteredFriends = [];
@@ -345,7 +347,7 @@
       return;
     }
 
-    fetch("http://localhost:3000/friends/friends", {
+    fetch(`${BASE_URL}/friends/friends`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ userId }),
@@ -479,7 +481,7 @@
     const userId = parsedToken?.userId;
 
     if (confirm("¿Estás seguro de que quieres eliminar a este amigo?")) {
-      fetch("http://localhost:3000/friends/delete-friend", {
+      fetch(`${BASE_URL}/friends/delete-friend`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ userId, friendId }),

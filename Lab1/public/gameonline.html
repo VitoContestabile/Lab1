@@ -1,10 +1,803 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Title</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Plappy Pird - Online Game</title>
+    <script src="/env.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            font-family: 'Press Start 2P', cursive;
+            background-color: skyblue;
+        }
+
+        canvas {
+            display: block;
+        }
+
+        #opponent {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            width: 150px;
+            height: 250px;
+            background-color: rgba(0, 0, 0, 0.3);
+            border: 3px solid white;
+            border-radius: 10px;
+        }
+
+        #game-info {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            color: white;
+            text-shadow: 2px 2px 0 black;
+            font-size: 14px;
+        }
+
+        .player-info {
+            margin-bottom: 5px;
+        }
+
+        #countdown {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 72px;
+            color: white;
+            text-shadow: 4px 4px 0 black;
+            display: none;
+        }
+
+        #winner {
+            position: absolute;
+            top: 40%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 36px;
+            color: gold;
+            text-shadow: 4px 4px 0 black;
+            text-align: center;
+            display: none;
+        }
+    </style>
 </head>
 <body>
+<canvas id="board"></canvas>
+<canvas id="opponent"></canvas>
+<div id="game-info">
+    <div class="player-info">Tú: <span id="player-score">0</span></div>
+    <div class="player-info">Rival: <span id="opponent-score">0</span></div>
+</div>
+<div id="countdown">3</div>
+<div id="winner"></div>
 
+<script>
+    const BASE_URL = window.ENV?.BASE_URL || 'http://localhost:3000';
+    const WS_URL = window.ENV?.WS_URL || 'localhost:3000';
+
+    // Variables globales para WebSocket
+    let socket;
+    let lobbyId = localStorage.getItem("lobbyId");
+    let token = localStorage.getItem("token");
+    let userId;
+    let isHost = false;
+    let opponentId;
+    let gameRunning = false;
+    let localGameOver = false;
+    let bothPlayersReady = false;
+    let opponentGameOver = false;
+
+    // Parseamos el token para obtener el userId
+    function parseJwt(token) {
+        try {
+            const base64Url = token.split('.')[1];
+            const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+            const jsonPayload = decodeURIComponent(atob(base64).split('').map(c => {
+                return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+            }).join(''));
+            return JSON.parse(jsonPayload);
+        } catch (e) {
+            return null;
+        }
+    }
+
+    // Inicializar datos del jugador
+    const userData = parseJwt(token);
+    if (userData) {
+        userId = userData.userId;
+        console.log("✅ UserId obtenido:", userId);
+    } else {
+        console.error("❌ No hay token válido");
+        // Redirigir si no hay token válido
+        // window.location.href = 'WebMenu.html';
+    }
+
+    // Variables del juego principal
+    const board = document.getElementById("board");
+    const ctx = board.getContext("2d");
+    let boardWidth = window.innerWidth;
+    let boardHeight = window.innerHeight;
+    board.width = boardWidth;
+    board.height = boardHeight;
+
+    // Variables del canvas del oponente
+    const opponentCanvas = document.getElementById("opponent");
+    const opponentCtx = opponentCanvas.getContext("2d");
+    opponentCanvas.width = 150;
+    opponentCanvas.height = 250;
+
+    // Bird
+    let bird = {
+        x: boardWidth / 8,
+        y: boardHeight / 2,
+        width: 45,
+        height: 45,
+        imgSrc: null
+    };
+    let opponentBird = {
+        x: opponentCanvas.width / 8,
+        y: opponentCanvas.height / 2,
+        width: 20,
+        height: 20,
+        imgSrc: null
+    };
+    let velocityY = 0;
+    let gravity = 0.23;
+
+    // Pipes
+    let pipeArray = [];
+    let pipeWidth = 64;
+    let pipeHeight = 512;
+    let openingSpace = 250;
+    let pipeX = boardWidth;
+
+    // Mini pipes para el canvas del oponente
+    let opponentPipeArray = [];
+
+    // Imágenes
+    let birdImg = new Image();
+    let opponentBirdImg = new Image();
+    let topPipeImg = new Image();
+    let bottomPipeImg = new Image();
+
+    // Cargar imágenes
+    topPipeImg.src = "./assets/toppipe.png";
+    bottomPipeImg.src = "./assets/bottompipe.png";
+
+    // Juego
+    let velocityX = -2;
+    let gameOver = false;
+    let score = 0;
+    let pipeInterval;
+    let countdown = 3;
+    let countdownTimer;
+
+    // Cargar skin del pájaro
+    async function loadBirdSkin(userId) {
+        try {
+            const res = await fetch(`${BASE_URL}/shop/get-current-skin-image`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ userId: userId })
+            });
+
+            const data = await res.json();
+            console.log("🎨 Skin cargada:", data.image_url);
+            return data.image_url;
+        } catch (error) {
+            console.error("Error cargando skin:", error);
+            return "../assets/flappybird.png"; // Imagen de placeholder
+        }
+    }
+
+    // Inicializar WebSocket y configurar conexión
+    function initWebSocket() {
+        console.log("🔌 Iniciando conexión WebSocket...");
+
+        // Si no hay lobby o token, simular para testing
+
+
+        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const wsURL = `wss://${WS_URL}/ws/game/${lobbyId}?token=${token}`;
+
+        socket = new WebSocket(wsURL);
+
+        socket.onopen = () => {
+            console.log("✅ Conexión WebSocket establecida");
+            // Enviar mensaje de jugador listo
+            socket.send(JSON.stringify({
+                type: "PLAYER_READY",
+                userId: userId,
+                lobbyId: lobbyId
+            }));
+
+            // Resetear contador de reconexión
+            reconnectAttempts = 0;
+        };
+
+        socket.onmessage = (event) => {
+            handleWebSocketMessage(event);
+        };
+
+        socket.onerror = (error) => {
+            console.error("❌ Error en WebSocket:", error);
+            showConnectionMessage("Error de conexión.");
+
+        };
+
+        socket.onclose = (event) => {
+            console.log("🔌 Conexión WebSocket cerrada:", event.code, event.reason);
+
+            // Mostrar mensaje al usuario
+            if (!gameRunning) {
+                showConnectionMessage("Conexión cerrada.");
+            }
+        };
+    }
+
+    // Simular juego local para testing
+
+
+    // Variables para manejo de reconexión
+    let reconnectAttempts = 0;
+    const maxReconnectAttempts = 5;
+    let reconnectTimeout;
+    let manualDisconnect = false;
+
+    // Función para mostrar mensajes de conexión al usuario
+    function showConnectionMessage(message) {
+        let msgElement = document.getElementById("connection-message");
+        if (!msgElement) {
+            msgElement = document.createElement("div");
+            msgElement.id = "connection-message";
+            msgElement.style.position = "absolute";
+            msgElement.style.top = "50%";
+            msgElement.style.left = "50%";
+            msgElement.style.transform = "translate(-50%, -50%)";
+            msgElement.style.backgroundColor = "rgba(0, 0, 0, 0.7)";
+            msgElement.style.color = "white";
+            msgElement.style.padding = "20px";
+            msgElement.style.borderRadius = "10px";
+            msgElement.style.fontFamily = "'Press Start 2P', cursive";
+            msgElement.style.textAlign = "center";
+            msgElement.style.zIndex = "1000";
+            document.body.appendChild(msgElement);
+        }
+
+        msgElement.textContent = message;
+        msgElement.style.display = "block";
+    }
+
+    // Ocultar mensaje de conexión
+    function hideConnectionMessage() {
+        const msgElement = document.getElementById("connection-message");
+        if (msgElement) {
+            msgElement.style.display = "none";
+        }
+    }
+
+    // Manejar mensajes recibidos por WebSocket
+    function handleWebSocketMessage(event) {
+        const message = JSON.parse(event.data);
+        console.log("📨 Mensaje recibido:", message);
+
+        // Ocultar mensaje de conexión si estaba visible
+        hideConnectionMessage();
+
+        switch (message.type) {
+            case "LOBBY_INFO":
+                isHost = message.hostId === userId;
+                opponentId = isHost ? message.guestId : message.hostId;
+
+                // Cargar skin del oponente
+                loadBirdSkin(opponentId).then(imageUrl => {
+                    if (imageUrl) {
+                        opponentBirdImg.src = imageUrl;
+                        opponentBird.imgSrc = imageUrl;
+                    }
+                });
+                break;
+
+            case "ALL_PLAYERS_READY":
+                bothPlayersReady = true;
+                startCountdown();
+                break;
+
+            case "GAME_START":
+                startGame();
+                break;
+
+            case "PLAYER_POSITION":
+                if (message.userId !== userId) {
+                    opponentBird.y = (message.y / message.boardHeight) * opponentCanvas.height;
+                    document.getElementById("opponent-score").textContent = message.score;
+                    updateOpponentPipes(message.pipes, message.boardWidth, message.boardHeight);
+                }
+                break;
+
+            case "PLAYER_JUMP":
+                if (message.userId !== userId) {
+                    // Animación de salto del oponente (opcional)
+                }
+                break;
+
+            case "GAME_OVER":
+                if (message.userId !== userId) {
+                    opponentGameOver = true;
+                    checkEndGame();
+                }
+                break;
+
+            case "PLAYER_DISCONNECTED":
+                if (gameRunning) {
+                    showGameMessage("¡El oponente se desconectó!", "¡Victoria!");
+                    setTimeout(() => {
+                        window.location.href = 'MainMenu.html';
+                    }, 3000);
+                } else {
+                    showGameMessage("El oponente se desconectó", "Volviendo al menú...");
+                    setTimeout(() => {
+                        window.location.href = 'MainMenu.html';
+                    }, 2000);
+                }
+                break;
+        }
+    }
+
+    // Actualizar las tuberías en miniatura del oponente
+    function updateOpponentPipes(pipes, origWidth, origHeight) {
+        opponentPipeArray = pipes.map(pipe => {
+            return {
+                x: (pipe.x / origWidth) * opponentCanvas.width,
+                y: (pipe.y / origHeight) * opponentCanvas.height,
+                width: (pipe.width / origWidth) * opponentCanvas.width,
+                height: (pipe.height / origHeight) * opponentCanvas.height,
+                img: pipe.isTop ? topPipeImg : bottomPipeImg
+            };
+        });
+    }
+
+    // Iniciar cuenta regresiva
+    function startCountdown() {
+        console.log("⏰ Iniciando countdown...");
+        const countdownElement = document.getElementById("countdown");
+        countdownElement.style.display = "block";
+        countdownElement.textContent = countdown;
+
+        countdownTimer = setInterval(() => {
+            countdown--;
+            console.log("⏰ Countdown:", countdown);
+            countdownElement.textContent = countdown;
+
+            if (countdown <= 0) {
+                clearInterval(countdownTimer);
+                countdownElement.style.display = "none";
+                console.log("🚀 Countdown terminado, iniciando juego...");
+
+                // Iniciar juego directamente o enviar señal si soy host
+                if (isHost || !socket) {
+                    startGame();
+                } else {
+                    socket.send(JSON.stringify({
+                        type: "GAME_START",
+                        lobbyId: lobbyId
+                    }));
+                }
+            }
+        }, 1000);
+    }
+
+    // Iniciar juego
+    async function startGame() {
+        console.log("🎬 ¡INICIANDO startGame()!");
+        gameRunning = true;
+
+        // Cargar imagen del pájaro
+
+        birdImg.src = await loadBirdSkin(userId);
+        opponentBirdImg.src = await loadBirdSkin(opponentId);
+
+        // También asignamos imagen visible al oponente
+
+        // Logs para confirmar que se asignó bien
+        birdImg.onload = () => {
+            console.log("✅ Imagen del pájaro cargada correctamente");
+        };
+        birdImg.onerror = () => {
+            console.error("❌ Error cargando la imagen del pájaro");
+        };
+
+        // Agregar event listeners
+        document.addEventListener("keydown", moveBird);
+        document.addEventListener("touchstart", handleTouchStart);
+
+        // Resetear variables del juego
+        bird.x = boardWidth / 8;
+        bird.y = boardHeight / 2;
+        velocityY = 0;
+        pipeArray = [];
+        score = 0;
+        gameOver = false;
+        localGameOver = false;
+        velocityX = -2;
+
+        // Limpiar intervalo anterior y crear nuevo
+        clearInterval(pipeInterval);
+        pipeInterval = setInterval(placePipes, 1800);
+
+        console.log("🚀 Comenzando loop de juego...");
+        requestAnimationFrame(update);
+    }
+
+    // Bucle principal del juego
+    function update() {
+
+        if (localGameOver) {
+            console.log("🛑 Juego terminado localmente");
+            return;
+        }
+
+        // Limpiar canvas
+        ctx.clearRect(0, 0, board.width, board.height);
+        opponentCtx.clearRect(0, 0, opponentCanvas.width, opponentCanvas.height);
+
+        // Fondo
+        ctx.fillStyle = "skyblue";
+        ctx.fillRect(0, 0, board.width, board.height);
+        opponentCtx.fillStyle = "skyblue";
+        opponentCtx.fillRect(0, 0, opponentCanvas.width, opponentCanvas.height);
+
+        // Actualizar posición del pájaro
+        velocityY += gravity;
+        bird.y = Math.max(bird.y + velocityY, 0);
+
+
+        // Dibujar pájaro principal
+        if (birdImg.complete && birdImg.naturalWidth > 0) {
+            ctx.drawImage(birdImg, bird.x, bird.y, bird.width, bird.height);
+            console.log("✅ Pájaro dibujado correctamente");
+        } else {
+            // Dibujar un rectángulo como fallback
+            ctx.fillStyle = "yellow";
+            ctx.fillRect(bird.x, bird.y, bird.width, bird.height);
+            console.log("⚠️ Usando rectángulo como fallback para el pájaro");
+        }
+
+        // Dibujar pájaro del oponente
+        if (opponentBirdImg.complete && opponentBirdImg.naturalWidth > 0) {
+            opponentCtx.drawImage(opponentBirdImg, opponentBird.x, opponentBird.y, opponentBird.width, opponentBird.height);
+        } else {
+            opponentCtx.fillStyle = "red";
+            opponentCtx.fillRect(opponentBird.x, opponentBird.y, opponentBird.width, opponentBird.height);
+        }
+
+        // Verificar si el pájaro tocó el suelo
+        if (bird.y > board.height) {
+            console.log("💥 El pájaro tocó el suelo");
+            gameOver = true;
+            localGameOver = true;
+            handleGameOver();
+            return;
+        }
+
+        // Actualizar tuberías
+        for (let i = 0; i < pipeArray.length; i++) {
+            let pipe = pipeArray[i];
+            pipe.x += velocityX;
+
+            // Dibujar tubería
+            if (pipe.img.complete && pipe.img.naturalWidth > 0) {
+                ctx.drawImage(pipe.img, pipe.x, pipe.y, pipe.width, pipe.height);
+            } else {
+                ctx.fillStyle = "green";
+                ctx.fillRect(pipe.x, pipe.y, pipe.width, pipe.height);
+            }
+
+            // Verificar si pasó la tubería para sumar puntos
+            if (!pipe.passed && bird.x > pipe.x + pipe.width) {
+                score += 0.5;
+                document.getElementById("player-score").textContent = Math.floor(score);
+                pipe.passed = true;
+                console.log("✨ Punto! Score:", Math.floor(score));
+            }
+
+            // Verificar colisión
+            if (detectCollision(bird, pipe)) {
+                console.log("💥 Colisión detectada con tubería");
+                gameOver = true;
+                localGameOver = true;
+                handleGameOver();
+                return;
+            }
+        }
+
+        // Eliminar tuberías que salieron de pantalla
+        while (pipeArray.length > 0 && pipeArray[0].x < -pipeWidth) {
+            pipeArray.shift();
+        }
+
+        // Dibujar tuberías del oponente
+        for (let i = 0; i < opponentPipeArray.length; i++) {
+            let pipe = opponentPipeArray[i];
+            if (pipe.img.complete && pipe.img.naturalWidth > 0) {
+                opponentCtx.drawImage(pipe.img, pipe.x, pipe.y, pipe.width, pipe.height);
+            } else {
+                opponentCtx.fillStyle = "darkgreen";
+                opponentCtx.fillRect(pipe.x, pipe.y, pipe.width, pipe.height);
+            }
+        }
+
+        // Enviar posición si hay conexión WebSocket
+        if (gameRunning && !localGameOver && socket && socket.readyState === WebSocket.OPEN) {
+            socket.send(JSON.stringify({
+                type: "PLAYER_POSITION",
+                userId: userId,
+                lobbyId: lobbyId,
+                x: bird.x,
+                y: bird.y,
+                boardWidth: boardWidth,
+                boardHeight: boardHeight,
+                score: Math.floor(score),
+                pipes: pipeArray.map(pipe => ({
+                    x: pipe.x,
+                    y: pipe.y,
+                    width: pipe.width,
+                    height: pipe.height,
+                    isTop: pipe.img === topPipeImg
+                }))
+            }));
+        }
+
+        // Continuar el loop
+        requestAnimationFrame(update);
+    }
+
+    // Generar nuevas tuberías
+    function placePipes() {
+        if (localGameOver || !gameRunning) return;
+
+        console.log("🚪 Generando nueva tubería");
+        let randomPipeY = -pipeHeight / 4 - Math.random() * (pipeHeight / 2);
+
+        // Tubería superior
+        pipeArray.push({
+            img: topPipeImg,
+            x: pipeX,
+            y: randomPipeY,
+            width: pipeWidth,
+            height: pipeHeight,
+            passed: false
+        });
+
+        // Tubería inferior
+        pipeArray.push({
+            img: bottomPipeImg,
+            x: pipeX,
+            y: randomPipeY + pipeHeight + openingSpace,
+            width: pipeWidth,
+            height: pipeHeight,
+            passed: false
+        });
+    }
+
+    // Manejar salto del pájaro (teclado)
+    function moveBird(e) {
+        if (["Space", "ArrowUp", "KeyX"].includes(e.code) && gameRunning && !localGameOver) {
+            console.log("🦅 ¡Salto!");
+            velocityY = -6;
+
+            // Enviar evento de salto si hay conexión
+            if (socket && socket.readyState === WebSocket.OPEN) {
+                socket.send(JSON.stringify({
+                    type: "PLAYER_JUMP",
+                    userId: userId,
+                    lobbyId: lobbyId
+                }));
+            }
+        }
+    }
+
+    // Manejar salto del pájaro (móvil)
+    function handleTouchStart(e) {
+        if (gameRunning && !localGameOver) {
+            e.preventDefault();
+            console.log("📱 ¡Toque en móvil!");
+            velocityY = -6;
+
+            // Enviar evento de salto si hay conexión
+            if (socket && socket.readyState === WebSocket.OPEN) {
+                socket.send(JSON.stringify({
+                    type: "PLAYER_JUMP",
+                    userId: userId,
+                    lobbyId: lobbyId
+                }));
+            }
+        }
+    }
+
+    // Verificar colisión
+    function detectCollision(a, b) {
+        return a.x < b.x + b.width &&
+            a.x + a.width > b.x &&
+            a.y < b.y + b.height &&
+            a.y + a.height > b.y;
+    }
+
+    // Manejar fin de juego
+    function handleGameOver() {
+        console.log("💀 Game Over! Score final:", Math.floor(score));
+
+        if (socket && socket.readyState === WebSocket.OPEN) {
+            socket.send(JSON.stringify({
+                type: "GAME_OVER",
+                userId: userId,
+                lobbyId: lobbyId,
+                score: Math.floor(score)
+            }));
+        }
+
+        checkEndGame();
+    }
+
+    // Verificar si ambos jugadores terminaron
+    function checkEndGame() {
+        // En modo local, terminar inmediatamente
+        if (!socket) {
+            showFinalResults();
+            return;
+        }
+
+        if (localGameOver && opponentGameOver) {
+            showFinalResults();
+        }
+    }
+
+    // Mostrar resultados finales
+    function showFinalResults() {
+        const myScore = Math.floor(score);
+        const opponentScore = parseInt(document.getElementById("opponent-score").textContent) || 0;
+        const winnerElement = document.getElementById("winner");
+        let result;
+
+        if (myScore > opponentScore) {
+            winnerElement.textContent = "¡GANASTE!\n" + myScore + " - " + opponentScore;
+            result = `${userId}_win`;
+        } else if (myScore < opponentScore) {
+            winnerElement.textContent = "¡PERDISTE!\n" + myScore + " - " + opponentScore;
+            result = `${opponentId}_win`;
+        } else {
+            winnerElement.textContent = "¡EMPATE!\n" + myScore + " - " + opponentScore;
+            result = "draw";
+        }
+
+        // Función para enviar el resultado del juego al servidor
+        async function lobbyResult(result) {
+            try {
+                console.log("📊 Enviando resultado del juego:", result);
+
+                const response = await fetch(`${BASE_URL}/lobby/${lobbyId}/result`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        result: result,
+                        myScore: Math.floor(score),
+                        opponentScore: parseInt(document.getElementById("opponent-score").textContent) || 0,
+                        userId: userId,
+                        opponentId: opponentId
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    console.log("✅ Resultado enviado correctamente:", data);
+                } else {
+                    console.error("❌ Error enviando resultado:", data.message);
+                }
+            } catch (error) {
+                console.error("❌ Error de red enviando resultado:", error);
+            }
+        }
+
+        lobbyResult(result);
+
+        winnerElement.style.display = "block";
+
+        // Guardar puntuación localmente
+        localStorage.setItem('lastScore', myScore);
+
+        // Enviar resultado al servidor para actualizar el estado de la lobby
+
+
+        setTimeout(() => {
+            window.location.href = 'MainMenu.html';
+        }, 5000);
+    }
+
+    // Nueva función para enviar el resultado al servidor
+
+    // Función para manejar el redimensionamiento de la ventana
+    function handleResize() {
+        boardWidth = window.innerWidth;
+        boardHeight = window.innerHeight;
+        board.width = boardWidth;
+        board.height = boardHeight;
+
+        // Ajustar posición del pájaro
+        if (!gameRunning) {
+            bird.x = boardWidth / 8;
+            bird.y = boardHeight / 2;
+        }
+    }
+
+    // Mostrar mensaje durante el juego
+    function showGameMessage(mainText, subText = "") {
+        let msgContainer = document.getElementById("game-message");
+        if (!msgContainer) {
+            msgContainer = document.createElement("div");
+            msgContainer.id = "game-message";
+            msgContainer.style.position = "absolute";
+            msgContainer.style.top = "50%";
+            msgContainer.style.left = "50%";
+            msgContainer.style.transform = "translate(-50%, -50%)";
+            msgContainer.style.backgroundColor = "rgba(0, 0, 0, 0.8)";
+            msgContainer.style.color = "white";
+            msgContainer.style.padding = "30px";
+            msgContainer.style.borderRadius = "15px";
+            msgContainer.style.fontFamily = "'Press Start 2P', cursive";
+            msgContainer.style.textAlign = "center";
+            msgContainer.style.zIndex = "1000";
+            msgContainer.style.width = "80%";
+            msgContainer.style.maxWidth = "500px";
+            document.body.appendChild(msgContainer);
+        }
+
+        msgContainer.innerHTML = `
+            <div style="font-size: 24px; margin-bottom: 15px;">${mainText}</div>
+            ${subText ? `<div style="font-size: 18px; color: gold;">${subText}</div>` : ''}
+        `;
+
+        msgContainer.style.display = "block";
+    }
+
+    // Limpiar recursos al salir de la página
+    window.addEventListener('beforeunload', () => {
+        manualDisconnect = true;
+        if (socket && socket.readyState === WebSocket.OPEN) {
+            socket.close();
+        }
+        clearInterval(pipeInterval);
+        clearTimeout(reconnectTimeout);
+    });
+
+    // Inicializar el juego
+    window.addEventListener('resize', handleResize);
+
+    // Inicializar
+    console.log("🎯 Iniciando aplicación...");
+    initWebSocket();
+
+    // Cargar skin del jugador
+    if (userId) {
+        loadBirdSkin(userId).then(imageUrl => {
+            console.log("🎨 Skin del jugador cargada:", imageUrl);
+            if (imageUrl) {
+                birdImg.src = imageUrl;
+                bird.imgSrc = imageUrl;
+            }
+        });
+    }
+
+</script>
 </body>
 </html>

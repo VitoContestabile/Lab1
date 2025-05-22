@@ -4,6 +4,10 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title>Solicitudes de Amistad</title>
+    <script src="/env.js"></script>
+    <script>
+        const BASE_URL = window.ENV.BASE_URL;
+    </script>
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
     <style>
         body {
@@ -221,7 +225,7 @@
         // Restablecer mensajes
         statusMessage.textContent = "";
 
-        fetch('http://localhost:3000/friends/friend-requests', {
+        fetch(`${BASE_URL}/friends/friend-requests`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ userId })
@@ -264,7 +268,7 @@
         // Mostrar estado de la operación
         statusMessage.textContent = accept ? "Aceptando solicitud..." : "Rechazando solicitud...";
 
-        fetch("http://localhost:3000/user/get-user-id", {
+        fetch(`${BASE_URL}/user/get-user-id`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ username })
@@ -278,8 +282,8 @@
 
                 const senderId = data.userId;
                 const url = accept
-                    ? 'http://localhost:3000/friends/accept-friend-request'
-                    : 'http://localhost:3000/friends/reject-friend-request';
+                    ? `${BASE_URL}/friends/accept-friend-request`
+                    : `${BASE_URL}/friends/reject-friend-request`;
 
                 return fetch(url, {
                     method: 'POST',

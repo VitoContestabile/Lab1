@@ -4,6 +4,7 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Lobby | Plappy Pird</title>
+  <script src="/env.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
   <style>
     :root {
@@ -90,6 +91,7 @@
 <button class="button" onclick="location.href='MainMenu.html'">Cancelar</button>
 
 <script>
+  const BASE_URL = window.ENV.BASE_URL;
   const token = localStorage.getItem("token");
   const lobbyId = localStorage.getItem("lobbyId");
 
@@ -115,7 +117,7 @@
 
   async function getHostId() {
     try {
-      const res = await fetch(`http://localhost:3000/lobby/${lobbyId}/host`);
+      const res = await fetch(`${BASE_URL}/lobby/${lobbyId}/host`);
       const data = await res.json();
       if (data.success) {
         return data.host_id;
@@ -131,7 +133,7 @@
 
   async function getGuestId() {
     try {
-      const res = await fetch(`http://localhost:3000/lobby/${lobbyId}/guest`);
+      const res = await fetch(`${BASE_URL}/lobby/${lobbyId}/guest`);
       const data = await res.json();
       if (data.success) {
         return data.guest_id;
@@ -146,7 +148,7 @@
   }
 
   async function getUsernameById(userId) {
-    const res = await fetch('http://localhost:3000/user/get-user-data', {
+    const res = await fetch(`${BASE_URL}/user/get-user-data`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ userId })
@@ -159,7 +161,7 @@
   async function startGame() {
     try {
       // Actualizar el estado del lobby a "PLAYING"
-      const response = await fetch(`http://localhost:3000/lobby/${lobbyId}/start`, {
+      const response = await fetch(`${BASE_URL}/lobby/${lobbyId}/start`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -184,7 +186,7 @@
 
   async function fetchLobbyStatus(username) {
     try {
-      const res = await fetch(`http://localhost:3000/lobby/${lobbyId}`);
+      const res = await fetch(`${BASE_URL}/lobby/${lobbyId}`);
       const data = await res.json();
 
       if (!data.success) {

@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Game Over - Plappy Pird</title>
+  <script src="/env.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="flappybird.css">
   <style>
@@ -113,6 +114,7 @@
   </div>
 
   <script>
+    const BASE_URL = window.ENV.BASE_URL;
 
 
     async function main() {
@@ -168,7 +170,7 @@
     window.onload = main;
 
   async function updateCoinDisplay(userId) {
-    const res = await fetch('http://localhost:3000/game/get-coins', {
+    const res = await fetch(`${BASE_URL}/game/get-coins`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'

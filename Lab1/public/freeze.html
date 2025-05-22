@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <title>Cuenta Freezeada</title>
+  <script src="/env.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
   <style>
     body {
@@ -67,6 +68,7 @@
 <button onclick="logout()">Cerrar sesión</button>
 
 <script>
+  const BASE_URL = window.ENV.BASE_URL;
   function logout() {
     localStorage.removeItem('token');
     window.location.href = 'login.html';

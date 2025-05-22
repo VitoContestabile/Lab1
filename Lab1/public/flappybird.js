@@ -1,6 +1,3 @@
-
-
-
 // Rest of the code remains the same as in the previous version
 // (The entire previous flappybird.js code stays unchanged)
 
@@ -29,16 +26,16 @@ const userId = parseJwt(token).userId;
 console.log(userId)
 
 async function loadBirdSkin(userId) {
-  const res = await fetch("http://localhost:3000/shop/get-current-skin-image", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({ userId: userId })
-  });
+    const res = await fetch(`${BASE_URL}/shop/get-current-skin-image`, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ userId: userId })
+    });
 
-  const data = await res.json();
-  return data.image_url;
+    const data = await res.json();
+    return data.image_url;
 }
 
 function parseJwt(token) {
@@ -55,18 +52,18 @@ function parseJwt(token) {
 }
 
 loadBirdSkin(userId).then(imageUrl => {
-  if (imageUrl) {
+    if (imageUrl) {
 
-    birdImg.src = imageUrl;
+        birdImg.src = imageUrl;
 
-    // Podés esperar a que se cargue antes de usarlo:
-    birdImg.onload = () => {
-      // Ahora podés dibujar el pájaro en el canvas
-      console.log("Imagen cargada:");
-    };
-  } else {
-    console.error("No se recibió image_url");
-  }
+        // Podés esperar a que se cargue antes de usarlo:
+        birdImg.onload = () => {
+            // Ahora podés dibujar el pájaro en el canvas
+            console.log("Imagen cargada:");
+        };
+    } else {
+        console.error("No se recibió image_url");
+    }
 });
 topPipeImg.src = "./assets/toppipe.png";
 bottomPipeImg.src = "./assets/bottompipe.png";

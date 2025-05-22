@@ -4,6 +4,10 @@
     <meta charset="UTF-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title>Plappy Pird - Lobby</title>
+    <script src="/env.js"></script>
+    <script>
+        const BASE_URL = window.ENV.BASE_URL;
+    </script>
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -138,7 +142,7 @@
     async function checkIfLobbyExists() {
       try {
         // Hacer consulta periódica al backend para verificar existencia del lobby
-        const res = await fetch(`http://localhost:3000/lobby/check_lobby`, {
+        const res = await fetch(`${BASE_URL}/lobby/check_lobby`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ myId: userId, status: 'waiting' }) // Consulta con host_id y estado
@@ -168,7 +172,7 @@
             }
 
             // 1. Crear lobby
-            const resLobby = await fetch('http://localhost:3000/lobby/create_lobby', {
+            const resLobby = await fetch(`${BASE_URL}/lobby/create_lobby`, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({myId: userId})
@@ -206,7 +210,7 @@
           return;
         }
 
-        const resLobby = await fetch('http://localhost:3000/lobby/join_lobby', {
+        const resLobby = await fetch(`${BASE_URL}/lobby/join_lobby`, {
           method: 'POST',
           headers: {'Content-Type': 'application/json'},
           body: JSON.stringify({myId: userId, lobby_id: lobby_id})
@@ -233,7 +237,7 @@
     async function checkIfLobbyStarts(userId) {
       try {
         // Hacer consulta periódica al backend para verificar existencia del lobby
-        const res = await fetch(`http://localhost:3000/lobby/check_lobby_start`, {
+        const res = await fetch(`${BASE_URL}/lobby/check_lobby_start`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ myId: userId, status: 'PLAYING' }) // Consulta con host_id y estado

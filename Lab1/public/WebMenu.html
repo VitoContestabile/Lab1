@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Plappy Pird - Acceso</title>
+    <script src="/env.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
     <style>
         /* Variables para colores consistentes */
@@ -305,6 +306,7 @@
 <div id="notification" class="notification"></div>
 
 <script>
+    const BASE_URL = window.ENV.BASE_URL;
     // Comprobar si el usuario ya está autenticado
     if (localStorage.getItem("token")) {
         navigateTo("MainMenu.html");
@@ -355,7 +357,7 @@
         }
 
         try {
-            const response = await fetch('http://localhost:3000/auth/login', {
+            const response = await fetch(`${BASE_URL}/auth/login`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ username, password })
@@ -406,7 +408,7 @@
         }
 
         try {
-            const response = await fetch('http://localhost:3000/auth/register', {
+            const response = await fetch(`${BASE_URL}/auth/register`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ username, email, password })

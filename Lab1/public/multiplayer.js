@@ -232,7 +232,7 @@ async function loadBirdSkin(userId, playerIndex) {
             return "./assets/flappybird.png";
         }
 
-        const res = await fetch("http://localhost:3000/get-current-skin-image", {
+        const res = await fetch(`${BASE_URL}/shop/get-current-skin-image`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json"

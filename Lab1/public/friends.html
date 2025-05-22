@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Panel de Amigos</title>
+    <script src="/env.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
     <style>
         /* Estilos base */
@@ -145,6 +146,7 @@
 </div>
 
 <script>
+    const BASE_URL = window.ENV.BASE_URL;
     // Comprobar autenticación
     if (!localStorage.getItem("token")) {
         navigateTo("WebMenu.html");
@@ -177,7 +179,7 @@
 
         if (!userId) return;
 
-        fetch("http://localhost:3000/friends/friends", {
+        fetch(`${BASE_URL}/friends/friends`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ userId }),
@@ -203,7 +205,7 @@
 
         if (!userId) return;
 
-        fetch('http://localhost:3000/friends/friend-requests', {
+        fetch(`${BASE_URL}/friends/friend-requests`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ userId })

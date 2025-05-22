@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Plappy Pird - Menú Principal</title>
+    <script src="/env.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
     <style>
         /* Variables para colores consistentes */
@@ -350,6 +351,7 @@
 <div id="user-icon" style="display: none;" onclick="navigateTo('settings.html')"></div>
 
 <script>
+    const BASE_URL = window.ENV.BASE_URL;
     document.addEventListener("DOMContentLoaded", async function () {
         const token = localStorage.getItem("token")
 
@@ -361,7 +363,7 @@
 
         async function updateCoinDisplay(userId) {
             try {
-                const res = await fetch('http://localhost:3000/game/get-coins', {
+                const response = await fetch(`${BASE_URL}/game/get-coins`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
@@ -369,7 +371,7 @@
                     body: JSON.stringify({ id: userId })
                 });
 
-                const data = await res.json();
+                const data = await response.json();
                 document.getElementById("coin-count").textContent = data.coins;
             } catch (error) {
                 console.error("Error al cargar monedas:", error);
@@ -379,7 +381,7 @@
         await updateCoinDisplay(userId);
 
         try {
-            const response = await fetch('http://localhost:3000/user/get-user-data', {
+            const response = await fetch(`${BASE_URL}/user/get-user-data`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'

@@ -4,6 +4,10 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Ranking - Plappy Pird</title>
+  <script src="/env.js"></script>
+  <script>
+    const BASE_URL = window.ENV.BASE_URL;
+  </script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
 
@@ -316,7 +320,7 @@
 <script>
   async function cargarRanking() {
     try {
-      const res = await fetch('http://localhost:3000/user/ranking');
+      const res = await fetch(`${BASE_URL}/user/ranking`);
       console.log('Estado de la respuesta:', res.status);
 
       if (!res.ok) throw new Error(`HTTP ${res.status}`);

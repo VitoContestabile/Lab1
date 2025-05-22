@@ -302,5 +302,101 @@ router.post('/check_lobby_start', async (req, res) => {
         res.status(500).json({ success: false, message: "Error interno del servidor" });
     }
 });
+// Consulta SQL para actualizar el resultado del lobby
+const UPDATE_LOBBY_RESULT_QUERY = `
+    UPDATE lobby
+    SET status = 'finished', winner_id = $1, host_score = $2, guest_score = $3, finished_at = NOW()
+    WHERE id = $4
+    RETURNING id, status, winner_id, host_score, guest_score, finished_at
+`;
 
+// Función para actualizar el resultado del lobby
+async function updateLobbyResult(winnerId, hostScore, guestScore, lobbyId) {
+    return client.query(UPDATE_LOBBY_RESULT_QUERY, [winnerId, hostScore, guestScore, lobbyId]);
+}
+
+// Endpoint para actualizar el resultado del juego
+router.post('/:id/result', async (req, res) => {
+    const lobbyId = req.params.id;
+    const { result, myScore, opponentScore, userId, opponentId } = req.body;
+    const token = req.headers.authorization?.split(' ')[1];
+
+    if (!token) {
+        return res.status(401).json({ success: false, message: 'Token no proporcionado' });
+    }
+
+    try {
+        // Decodificar el token para obtener el ID del usuario
+        const base64Url = token.split('.')[1];
+        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+        const payload = JSON.parse(Buffer.from(base64, 'base64').toString());
+        const tokenUserId = payload.userId;
+
+        // Verificar que el usuario del token coincida con el userId enviado
+        if (tokenUserId !== userId) {
+            return res.status(403).json({
+                success: false,
+                message: 'Token no válido para este usuario'
+            });
+        }
+
+        // Obtener información del lobby para determinar quién es host y guest
+        const lobbyData = await client.query(`
+            SELECT host_id, guest_id FROM lobby WHERE id = $1
+        `, [lobbyId]);
+
+        if (lobbyData.rows.length === 0) {
+            return res.status(404).json({
+                success: false,
+                message: 'Lobby no encontrado'
+            });
+        }
+
+        const { host_id, guest_id } = lobbyData.rows[0];
+
+        // Determinar el ganador y las puntuaciones
+        let winnerId = null;
+        let hostScore, guestScore;
+
+        if (userId === host_id) {
+            hostScore = myScore;
+            guestScore = opponentScore;
+        } else {
+            hostScore = opponentScore;
+            guestScore = myScore;
+        }
+
+        // Determinar el ganador basado en el resultado
+        if (result.includes('_win')) {
+            const winnerFromResult = result.split('_')[0];
+            winnerId = parseInt(winnerFromResult);
+        } else if (result === 'draw') {
+            winnerId = null; // Empate
+        }
+
+        // Actualizar el lobby con el resultado
+        const updateResult = await updateLobbyResult(winnerId, hostScore, guestScore, lobbyId);
+
+        if (updateResult.rows.length === 0) {
+            return res.status(500).json({
+                success: false,
+                message: 'No se pudo actualizar el resultado del lobby'
+            });
+        }
+
+        res.json({
+            success: true,
+            message: 'Resultado del juego actualizado correctamente',
+            lobby: updateResult.rows[0]
+        });
+
+    } catch (err) {
+        console.error('Error al actualizar resultado del juego:', err);
+        res.status(500).json({
+            success: false,
+            message: 'Error interno del servidor al actualizar el resultado',
+            error: err.message
+        });
+    }
+});
 module.exports = router;

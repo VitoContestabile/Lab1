@@ -143,7 +143,7 @@ router.get('/ranking', async (req, res) => {
        FROM users 
        WHERE is_admin=false 
        ORDER BY score DESC, username ASC 
-       LIMIT 100`
+       LIMIT 5`
         );
         res.status(200).json({ ranking: result.rows });
     } catch (err) {

@@ -4,6 +4,10 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title>Enviar Solicitud</title>
+    <script src="/env.js"></script>
+    <script>
+        const BASE_URL = window.ENV.BASE_URL;
+    </script>
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
     <style>
         body {
@@ -172,7 +176,7 @@
         messageElement.textContent = "Enviando solicitud...";
 
         // Paso 1: Obtener el ID del amigo
-        fetch("http://localhost:3000/user/get-user-id", {
+        fetch(`${BASE_URL}/user/get-user-id`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ username: friendUsername })
@@ -193,7 +197,7 @@
                 }
 
                 // Paso 2: Enviar la solicitud
-                return fetch("http://localhost:3000/friends/send-friend-request", {
+                return fetch(`${BASE_URL}/friends/send-friend-request`, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ senderId, receiverId })
