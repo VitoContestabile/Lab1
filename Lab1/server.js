@@ -12,6 +12,9 @@ const routes = require('./src/routes');
 const app = express();
 const port = process.env.PORT || 3000;
 
+// ✅ AÑADIR ESTA LÍNEA para servir las imágenes de las skins
+app.use('/uploads', express.static('uploads'));
+
 app.use(cors());
 app.use(bodyParser.json());
 app.use(express.static('public'));

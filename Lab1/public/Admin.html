@@ -139,6 +139,66 @@
         .checkbox-container label {
             font-size: 14px;
         }
+
+        /* Estilos para el modal de mensaje */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            visibility: hidden;
+            opacity: 0;
+            transition: all 0.3s;
+        }
+
+        .modal-overlay.active {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        .message-modal {
+            background-color: #222244;
+            padding: 30px;
+            border-radius: 15px;
+            border: 5px solid #ffaa00;
+            width: 80%;
+            max-width: 500px;
+            box-shadow: 0 5px 30px rgba(0, 0, 0, 0.5);
+        }
+
+        .message-modal h2 {
+            color: #ffcc00;
+            margin-top: 0;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .message-modal textarea {
+            width: 100%;
+            height: 150px;
+            padding: 10px;
+            background-color: #333;
+            border: 3px solid #ffaa00;
+            color: white;
+            border-radius: 5px;
+            font-family: 'Press Start 2P', cursive;
+            font-size: 14px;
+            resize: none;
+            margin-bottom: 20px;
+            box-sizing: border-box;
+        }
+
+        .modal-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+        }
     </style>
 </head>
 <body>
@@ -178,7 +238,84 @@
     </table>
 </div>
 
+<!-- Modal para enviar mensaje -->
+<div id="message-modal-overlay" class="modal-overlay">
+    <div class="message-modal">
+        <h2>Enviar Mensaje</h2>
+        <textarea id="message-text" placeholder="Escribe tu mensaje aquí..."></textarea>
+        <div class="modal-buttons">
+            <button id="send-message-btn">Enviar</button>
+            <button id="cancel-message-btn">Cancelar</button>
+        </div>
+    </div>
+</div>
+
 <script>
+    // Variables globales para el modal de mensajes
+    let currentUserId = null;
+    const messageModal = document.getElementById('message-modal-overlay');
+    const messageTextArea = document.getElementById('message-text');
+    const sendMessageBtn = document.getElementById('send-message-btn');
+    const cancelMessageBtn = document.getElementById('cancel-message-btn');
+
+    // Configurar eventos de los botones del modal
+    sendMessageBtn.addEventListener('click', sendMessage);
+    cancelMessageBtn.addEventListener('click', closeMessageModal);
+
+    // Función para abrir el modal de mensaje
+    function openMessageModal(userId, username) {
+        currentUserId = userId;
+        messageTextArea.value = '';
+        messageModal.classList.add('active');
+        messageTextArea.placeholder = `Escribe un mensaje para ${username}...`;
+    }
+
+    // Función para cerrar el modal de mensaje
+    function closeMessageModal() {
+        messageModal.classList.remove('active');
+        currentUserId = null;
+    }
+
+    // Función para enviar el mensaje
+    function sendMessage() {
+        const alertMessage = messageTextArea.value.trim();
+
+        if (!alertMessage) {
+            alert('Por favor, escribe un mensaje');
+            return;
+        }
+
+        const token = localStorage.getItem('token');
+
+        fetch('http://localhost:3000/admin/send-message', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                user_id: currentUserId,
+                alert_message: alertMessage
+            })
+        })
+        .then(response => {
+            if (!response.ok) {
+                return response.json().then(err => {
+                    throw new Error(err.message || 'Error desconocido');
+                });
+            }
+            return response.json();
+        })
+        .then(data => {
+            alert(data.message);
+            closeMessageModal();
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert(`Error al enviar mensaje: ${error.message}`);
+        });
+    }
+
     // Función para cargar usuarios
     function loadUsers() {
         const token = localStorage.getItem('token');
@@ -190,22 +327,22 @@
                 'Content-Type': 'application/json'
             }
         })
-            .then(response => {
-                if (!response.ok) {
-                    return response.json().then(err => {
-                        throw new Error(err.message || 'Error desconocido');
-                    });
-                }
-                return response.json();
-            })
-            .then(users => {
-                console.log('Usuarios recibidos:', users);
-                displayUsers(users);
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert(`Error al cargar usuarios: ${error.message}`);
-            });
+        .then(response => {
+            if (!response.ok) {
+                return response.json().then(err => {
+                    throw new Error(err.message || 'Error desconocido');
+                });
+            }
+            return response.json();
+        })
+        .then(users => {
+            console.log('Usuarios recibidos:', users);
+            displayUsers(users);
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert(`Error al cargar usuarios: ${error.message}`);
+        });
     }
 
     // Función para mostrar usuarios en la tabla
@@ -240,8 +377,9 @@
             row.appendChild(scoreCell);
 
             const actionsCell = document.createElement('td');
-            const freezeButton = document.createElement('button');
 
+            // Botón Freeze
+            const freezeButton = document.createElement('button');
             if (user.is_admin) {
                 freezeButton.textContent = 'ADMIN';
                 freezeButton.disabled = true;
@@ -249,16 +387,24 @@
                 freezeButton.textContent = user.is_freezed ? 'FREEZED' : 'FREEZE';
                 freezeButton.onclick = () => toggleFreeze(user.id);
             }
-
             actionsCell.appendChild(freezeButton);
+
+            // Botón Mensaje
+            const messageButton = document.createElement('button');
+            messageButton.textContent = 'MENSAJE';
+            messageButton.onclick = () => openMessageModal(user.id, user.username);
+
+            // Si es admin, deshabilitamos también el botón de mensaje
+            if (user.is_admin) {
+                messageButton.disabled = true;
+            }
+
+            actionsCell.appendChild(messageButton);
             row.appendChild(actionsCell);
 
             tableBody.appendChild(row);
         });
     }
-
-
-
 
     function toggleFreeze(userId) {
         const token = localStorage.getItem('token');
@@ -271,17 +417,16 @@
             },
             body: JSON.stringify({ userId })
         })
-            .then(response => response.json())
-            .then(data => {
-                alert(data.is_freezed ? 'Usuario freezeado' : 'Usuario desfreezado');
-                loadUsers(); // Recargar usuarios para actualizar el botón
-            })
-            .catch(err => {
-                console.error('Error al freeze/desfreeze', err);
-                alert('Error al cambiar estado de freeze');
-            });
+        .then(response => response.json())
+        .then(data => {
+            alert(data.is_freezed ? 'Usuario freezeado' : 'Usuario desfreezado');
+            loadUsers(); // Recargar usuarios para actualizar el botón
+        })
+        .catch(err => {
+            console.error('Error al freeze/desfreeze', err);
+            alert('Error al cambiar estado de freeze');
+        });
     }
-
 
     // Función para crear un nuevo usuario
     function createUser() {
@@ -310,29 +455,29 @@
                 isAdmin
             })
         })
-            .then(response => {
-                if (!response.ok) {
-                    return response.json().then(err => {
-                        throw new Error(err.message || 'Error al crear usuario');
-                    });
-                }
-                return response.json();
-            })
-            .then(data => {
-                alert(data.message);
-                // Limpiar campos
-                document.getElementById('new-username').value = '';
-                document.getElementById('new-password').value = '';
-                document.getElementById('new-email').value='';
-                document.getElementById('is-admin').checked = false;
+        .then(response => {
+            if (!response.ok) {
+                return response.json().then(err => {
+                    throw new Error(err.message || 'Error al crear usuario');
+                });
+            }
+            return response.json();
+        })
+        .then(data => {
+            alert(data.message);
+            // Limpiar campos
+            document.getElementById('new-username').value = '';
+            document.getElementById('new-password').value = '';
+            document.getElementById('new-email').value='';
+            document.getElementById('is-admin').checked = false;
 
-                // Recargar lista de usuarios
-                loadUsers();
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert(`Error: ${error.message}`);
-            });
+            // Recargar lista de usuarios
+            loadUsers();
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert(`Error: ${error.message}`);
+        });
     }
 
     // Función para cerrar sesión
@@ -340,6 +485,13 @@
         localStorage.removeItem('token');
         window.location.href = 'WebMenu.html';
     }
+
+    // Cerrar modal al hacer clic fuera de él
+    messageModal.addEventListener('click', function(e) {
+        if (e.target === messageModal) {
+            closeMessageModal();
+        }
+    });
 
     // Inicializar al cargar la página
     window.onload = function() {

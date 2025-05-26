@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Menu Administrador - Flappy Bird</title>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Press Start 2P', cursive;
+            background: linear-gradient(135deg, #333366, #444477);
+            margin: 0;
+            padding: 20px;
+            color: white;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .container {
+            background-color: #222244;
+            border-radius: 15px;
+            padding: 40px;
+            box-shadow: 0 0 30px rgba(0, 0, 0, 0.7);
+            text-align: center;
+            max-width: 600px;
+            width: 100%;
+            border: 3px solid #ffaa00;
+        }
+
+        h1 {
+            color: #ffcc00;
+            text-shadow: 3px 3px 0px black;
+            margin-bottom: 50px;
+            font-size: 24px;
+            line-height: 1.5;
+        }
+        button {
+            font-family: 'Press Start 2P', cursive;
+            padding: 8px 16px;
+            background-color: #ffcc00;
+            border: 3px solid #ffaa00;
+            border-radius: 5px;
+            cursor: pointer;
+            color: #333366;
+            margin: 5px;
+            box-shadow: 3px 3px 0px rgba(0, 0, 0, 0.5);
+        }
+
+        button:hover {
+            background-color: #ffaa00;
+        }
+
+        button:active {
+            transform: scale(0.95);
+        }
+
+        .logout {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+        }
+
+        .welcome-text {
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+
+        .admin-text {
+            font-size: 40px;
+            color: #ff3366;
+            text-shadow: 4px 4px 0px black;
+        }
+
+        .menu-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+            margin-top: 50px;
+        }
+
+        .menu-button {
+            font-family: 'Press Start 2P', cursive;
+            padding: 20px 40px;
+            font-size: 20px;
+            background-color: #ffcc00;
+            border: 4px solid #ffaa00;
+            border-radius: 10px;
+            cursor: pointer;
+            color: #333366;
+            text-decoration: none;
+            display: block;
+            box-shadow: 5px 5px 0px rgba(0, 0, 0, 0.5);
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+
+        .menu-button:hover {
+            background-color: #ffaa00;
+            transform: translateY(-3px);
+            box-shadow: 8px 8px 0px rgba(0, 0, 0, 0.5);
+        }
+
+        .menu-button:active {
+            transform: translateY(0px);
+            box-shadow: 3px 3px 0px rgba(0, 0, 0, 0.5);
+        }
+
+        .users-button {
+            background: linear-gradient(135deg, #66ccff, #3399cc);
+            border-color: #2288bb;
+        }
+
+        .users-button:hover {
+            background: linear-gradient(135deg, #3399cc, #1177aa);
+        }
+
+        .skins-button {
+            background: linear-gradient(135deg, #ff6666, #cc3333);
+            border-color: #bb2222;
+        }
+
+        .skins-button:hover {
+            background: linear-gradient(135deg, #cc3333, #aa1111);
+        }
+
+        .logout {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+        }
+
+        .logout-button {
+            font-family: 'Press Start 2P', cursive;
+            padding: 8px 16px;
+            background-color: #ff3366;
+            border: 3px solid #cc2244;
+            border-radius: 5px;
+            cursor: pointer;
+            color: white;
+            box-shadow: 3px 3px 0px rgba(0, 0, 0, 0.5);
+            text-decoration: none;
+            font-size: 12px;
+        }
+
+        .logout-button:hover {
+            background-color: #cc2244;
+        }
+
+        .logout-button:active {
+            transform: scale(0.95);
+        }
+
+        /* Responsivo */
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px;
+                margin: 10px;
+            }
+
+            .welcome-text {
+                font-size: 20px;
+            }
+
+            .admin-text {
+                font-size: 28px;
+            }
+
+            .menu-button {
+                padding: 15px 30px;
+                font-size: 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <button class="logout" onclick="logout()">Cerrar Sesión</button>
+
+    <div class="container">
+        <h1>
+            <div class="welcome-text">WELCOME BACK</div>
+            <div class="admin-text">ADMIN</div>
+        </h1>
+
+        <div class="menu-buttons">
+            <a href="Admin.html" class="menu-button users-button">
+                USERS
+            </a>
+
+            <a href="AdminSkins.html" class="menu-button skins-button">
+                SKINS
+            </a>
+        </div>
+    </div>
+</body>
+<script>
+
+  const token=localStorage.getItem('token');
+  if(!token){
+    window.location.href = 'WebMenu.html';
+  }
+
+    function logout() {
+        localStorage.removeItem('token');
+        window.location.href = 'WebMenu.html';
+    }
+</script>
+</html>

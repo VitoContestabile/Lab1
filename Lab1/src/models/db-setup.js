@@ -78,10 +78,24 @@ const setupDatabase = async () => {
     `);
         console.log('✅ Tabla de lobby creada o ya existe');
 
+        // Crear la tabla de mensajes
+        await client.query(`
+      CREATE TABLE IF NOT EXISTS messages (
+        id SERIAL PRIMARY KEY,
+        user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        message TEXT DEFAULT '',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        is_opened BOOLEAN DEFAULT FALSE
+      )
+    `);
+
+        console.log('✅ Tabla de mensajes creada o ya existe');
+
         console.log('✅ Base de datos configurada correctamente');
     } catch (error) {
         console.error('❌ Error al configurar la base de datos:', error);
     }
+
 };
 
 
