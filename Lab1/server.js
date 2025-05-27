@@ -19,7 +19,8 @@ app.use(cors());
 app.use(bodyParser.json());
 app.use(express.static('public'));
 const path = require('path');
-
+// ✅ AÑADIR ESTA LÍNEA para servir las imágenes de las skins
+app.use('/uploads', express.static('uploads'));
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'WebMenu.html'));
 });

@@ -151,5 +151,94 @@ router.get('/ranking', async (req, res) => {
         res.status(500).json({ error: 'Error interno del servidor' });
     }
 });
+// Obtener mensajes
+router.get('/get-messages', async (req, res) => {
+    const { user_id } = req.query;
+
+    if (!user_id) {
+        return res.status(400).json({ error: 'Falta user_id en la consulta' });
+    }
+
+    try {
+        const result = await client.query(
+            `SELECT message, created_at FROM messages WHERE user_id = $1`,
+            [user_id]
+        );
+        res.status(200).json({ messages: result.rows });
+    } catch (err) {
+        console.error('Error al obtener los mensajes:', err);
+        res.status(500).json({ error: 'Error interno del servidor' });
+    }
+});
+
+//Borrar mensajes
+router.delete('/delete-message', async (req, res) => {
+    const { user_id, text } = req.query;
+
+    console.log('Solicitud de eliminación recibida:');
+    console.log('- user_id:', user_id);
+    console.log('- text:', text);
+
+    if (!user_id || !text) {
+        console.log('Error: Parámetros incompletos');
+        return res.status(400).json({ error: 'Falta user_id o text en la consulta' });
+    }
+
+    try {
+        // Primero, buscar el mensaje para verificar si existe
+        const checkQuery = 'SELECT id FROM messages WHERE user_id = $1 AND message = $2';
+        const checkResult = await client.query(checkQuery, [user_id, text]);
+
+        console.log(`Mensajes encontrados: ${checkResult.rowCount}`);
+
+        if (checkResult.rowCount === 0) {
+            // Si no se encuentra el mensaje exacto, intentar con una búsqueda más flexible
+            console.log('No se encontró el mensaje exacto, intentando con búsqueda por ID de usuario');
+
+            // Obtener todos los mensajes del usuario para depuración
+            const allMessages = await client.query(
+                'SELECT id, message FROM messages WHERE user_id = $1',
+                [user_id]
+            );
+
+            console.log(`Total de mensajes del usuario: ${allMessages.rowCount}`);
+            if (allMessages.rowCount > 0) {
+                console.log('Mensajes disponibles:');
+                allMessages.rows.forEach((msg, i) => {
+                    console.log(`${i+1}. ID: ${msg.id}, Mensaje: "${msg.message}"`);
+                });
+            }
+
+            return res.status(404).json({
+                message: 'No se encontró ningún mensaje para eliminar',
+                debug: {
+                    userMessages: allMessages.rows.length,
+                    requestedText: text
+                }
+            });
+        }
+
+        // Si el mensaje existe, eliminarlo
+        const messageId = checkResult.rows[0].id;
+        console.log(`Eliminando mensaje con ID: ${messageId}`);
+
+        const deleteResult = await client.query(
+            'DELETE FROM messages WHERE id = $1',
+            [messageId]
+        );
+
+        console.log(`Filas eliminadas: ${deleteResult.rowCount}`);
+        res.status(200).json({
+            message: 'Mensaje eliminado exitosamente',
+            messageId: messageId
+        });
+    } catch (err) {
+        console.error('Error al eliminar el mensaje:', err);
+        res.status(500).json({
+            error: 'Error interno del servidor',
+            details: err.message
+        });
+    }
+});
 
 module.exports = router;

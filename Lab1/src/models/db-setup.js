@@ -131,7 +131,16 @@ const setupDatabase = async () => {
         await createTable(CREATE_FRIENDS_TABLE, 'friends');
         await createTable(CREATE_FRIEND_REQUESTS_TABLE, 'friend_requests');
         await createTable(CREATE_LOBBY_TABLE, 'lobby');
-
+        // Crear la tabla de mensajes
+        await client.query(`
+      CREATE TABLE IF NOT EXISTS messages (
+        id SERIAL PRIMARY KEY,
+        user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        message TEXT DEFAULT '',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        is_opened BOOLEAN DEFAULT FALSE
+      )
+    `);
         // Ejecutar migraciones para agregar columnas faltantes
         await runMigrations();
 
