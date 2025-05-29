@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Settings</title>
+    <script src="/env.js"></script>
+    <script>
+        const BASE_URL = window.ENV.BASE_URL;
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <style>
+        /* Variables para colores consistentes */
+        :root {
+            --primary-color: #ffcc00;
+            --secondary-color: #ffaa00;
+            --dark-accent: #222034;
+            --light-accent: #8bcdff;
+            --sky-bg: #73c8f0;
+        }
+
+        /* Estilos globales */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        /* Fondo de la página con gradiente */
+        body {
+            text-align: center;
+            font-family: 'Press Start 2P', cursive;
+            background: linear-gradient(to bottom, var(--sky-bg) 0%, #e4f5fd 100%);
+            margin: 0;
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        /* Contenedor del menú con animación */
+        #settings-container {
+            position: absolute;
+            width: 100%;
+            height: 100vh;
+            background: url("/assets/flappybirdbg.png") no-repeat center center;
+            background-size: cover;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            animation: fadeIn 0.8s ease-in-out;
+            padding: 20px;
+        }
+
+        /* Animación para el menú */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Estilo del título */
+        h2 {
+            font-size: 45px;
+            color: white;
+            text-shadow:
+                    4px 4px 0px var(--dark-accent),
+                    8px 8px 0px rgba(0,0,0,0.2);
+            margin-bottom: 40px;
+            animation: glow 2s infinite alternate;
+        }
+
+        @keyframes glow {
+            from { text-shadow: 4px 4px 0px var(--dark-accent), 0 0 10px rgba(255,255,255,0.3); }
+            to { text-shadow: 4px 4px 0px var(--dark-accent), 0 0 30px rgba(255,255,255,0.7); }
+        }
+
+        /* Panel de configuraciones */
+        .settings-panel {
+            background-color: rgba(0, 0, 0, 0.6);
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+            border: 3px solid var(--primary-color);
+            max-width: 500px;
+            width: 90%;
+            margin-bottom: 30px;
+        }
+
+        /* Estilo mejorado de los checkboxes */
+        label {
+            font-size: 20px;
+            margin: 20px 0;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        label:hover {
+            color: var(--primary-color);
+        }
+
+        /* Estilizando el checkbox personalizado */
+        .custom-checkbox {
+            position: relative;
+            padding-left: 45px;
+            user-select: none;
+        }
+
+        /* Ocultando el checkbox nativo */
+        .custom-checkbox input {
+            position: absolute;
+            opacity: 0;
+            cursor: pointer;
+            height: 0;
+            width: 0;
+        }
+
+        /* Creando un checkbox personalizado */
+        .checkmark {
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 30px;
+            width: 30px;
+            background-color: #333;
+            border: 3px solid var(--secondary-color);
+            border-radius: 5px;
+        }
+
+        /* Creando la marca de verificación/check */
+        .custom-checkbox input:checked ~ .checkmark:after {
+            content: '';
+            position: absolute;
+            display: block;
+            left: 10px;
+            top: 4px;
+            width: 8px;
+            height: 15px;
+            border: solid var(--primary-color);
+            border-width: 0 4px 4px 0;
+            transform: rotate(45deg);
+            animation: checkAnim 0.3s ease-out;
+        }
+
+        @keyframes checkAnim {
+            0% { opacity: 0; transform: rotate(45deg) scale(0.5); }
+            100% { opacity: 1; transform: rotate(45deg) scale(1); }
+        }
+
+        /* Contenedor de botones */
+        .button-container {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            margin-top: 20px;
+            width: 280px;
+        }
+
+        /* Estilo mejorado de los botones */
+        button {
+            width: 100%;
+            font-size: 18px;
+            font-family: 'Press Start 2P', cursive;
+            padding: 16px 30px;
+            background-color: var(--primary-color);
+            color: var(--dark-accent);
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            position: relative;
+            transition: all 0.2s ease;
+            overflow: hidden;
+        }
+
+        /* Efecto 3D para los botones */
+        button::before {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 6px;
+            background-color: var(--secondary-color);
+            border-bottom-left-radius: 12px;
+            border-bottom-right-radius: 12px;
+        }
+
+        /* Efecto al pasar el mouse */
+        button:hover {
+            background-color: var(--secondary-color);
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+        }
+
+        /* Efecto al hacer clic */
+        button:active {
+            transform: translateY(3px);
+            box-shadow: 0 5px 10px rgba(0,0,0,0.2);
+        }
+
+        /* Monedas mejoradas */
+        #coin-display {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            display: flex;
+            align-items: center;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            border-radius: 50px;
+            padding: 10px 20px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            font-family: 'Press Start 2P', cursive;
+            font-size: 16px;
+            color: var(--dark-accent);
+            border: 3px solid white;
+            animation: bounce 0.5s ease;
+        }
+
+        @keyframes bounce {
+            0% { transform: scale(0); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+
+        #coin-display {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            display: flex;
+            align-items: center;
+            background: linear-gradient(135deg, #ffd700, #ffaa00);
+            border-radius: 25px;
+            padding: 8px 15px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+            font-family: 'Press Start 2P', cursive;
+            font-size: 16px;
+            border: 3px solid #fff;
+            color: var(--dark-accent);
+            animation: shimmer 2s infinite alternate;
+        }
+
+        /* Animación para el contador de monedas */
+        @keyframes shimmer {
+            from { box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3); }
+            to { box-shadow: 0 4px 15px rgba(255, 215, 0, 0.7); }
+        }
+
+        #coin-display img {
+            width: 28px;
+            height: 28px;
+            margin-right: 10px;
+            animation: spin 10s infinite linear;
+            border-radius: 50%;
+            border: 2px solid #fff;
+        }
+
+        /* Animación para la moneda */
+        @keyframes spin {
+            0% { transform: rotateY(0deg); }
+            100% { transform: rotateY(360deg); }
+        }
+
+
+        /* Nubes decorativas */
+        .cloud {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 50%;
+            z-index: -1;
+        }
+
+        .cloud1 {
+            width: 150px;
+            height: 60px;
+            top: 10%;
+            left: 10%;
+            animation: float 20s infinite linear;
+        }
+
+        .cloud2 {
+            width: 100px;
+            height: 40px;
+            top: 20%;
+            right: 15%;
+            animation: float 15s infinite linear reverse;
+        }
+
+        /* Animación para las nubes */
+        @keyframes float {
+            0% { transform: translateX(0); }
+            50% { transform: translateX(100px); }
+            100% { transform: translateX(0); }
+        }
+
+        /* Estilo para menú responsive */
+        @media (max-height: 700px) {
+            h2 {
+                font-size: 35px;
+                margin-bottom: 20px;
+            }
+
+            button {
+                padding: 12px 20px;
+                font-size: 16px;
+            }
+
+            .button-container {
+                gap: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+<!-- Nubes decorativas -->
+<div class="cloud cloud1"></div>
+<div class="cloud cloud2"></div>
+
+<div id="settings-container">
+    <h2>Configuración</h2>
+
+    <div class="settings-panel">
+        <label class="custom-checkbox">
+            <span>Sonido activado</span>
+            <input type="checkbox" id="sound-checkbox">
+            <span class="checkmark"></span>
+        </label>
+    </div>
+
+    <div class="button-container">
+        <button onclick="location.href='MainMenu.html'">Volver al menú</button>
+        <button onclick="location.href='CambiarNombre.html'">Cambiar Nombre</button>
+    </div>
+</div>
+
+<div id="coin-display">
+    <img src="assets/coin.jpg" alt="Moneda" />
+    <span id="coin-count">0</span>
+</div>
+
+<script>
+    if(!localStorage.getItem("token")){
+        navigateTo("WebMenu.html")
+    }
+
+    function navigateTo(page) {
+        window.location.href = page;
+    }
+
+    document.addEventListener("DOMContentLoaded", async function () {
+        const token = localStorage.getItem("token");
+        const userId = parseJwt(token).userId;
+
+        async function updateCoinDisplay(userId) {
+            const res = await fetch(`${BASE_URL}/user/get-coins`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({id: userId})
+            });
+
+            const data = await res.json();
+            document.getElementById("coin-count").textContent = data.coins;
+        }
+
+        await updateCoinDisplay(userId);
+
+        const soundCheckbox = document.getElementById("sound-checkbox");
+        let sound = new Audio('flappybird-sound.mp3.mp3');
+        sound.loop = true;
+
+        // Verificar si el sonido estaba activado antes
+        if (localStorage.getItem("soundEnabled") === "true") {
+            soundCheckbox.checked = true;
+            if (!window.soundPlaying) {
+                sound.play();
+                window.soundPlaying = true;
+            }
+        }
+
+        // Añadir evento de cambio al checkbox
+        soundCheckbox.addEventListener("change", function() {
+            if (this.checked) {
+                sound.play();
+                window.soundPlaying = true;
+                localStorage.setItem("soundEnabled", "true");
+            } else {
+                sound.pause();
+                localStorage.setItem("soundEnabled", "false");
+            }
+        });
+    });
+
+    function parseJwt(token) {
+        try {
+            const base64Url = token.split('.')[1];
+            const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+            const jsonPayload = decodeURIComponent(atob(base64).split('').map(c => {
+                return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+            }).join(''));
+            return JSON.parse(jsonPayload);
+        } catch (e) {
+            return null;
+        }
+    }
+</script>
+</body>
+</html>

@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Enviar Solicitud</title>
+    <script src="/env.js"></script>
+    <script>
+        const BASE_URL = window.ENV.BASE_URL;
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <style>
+        body {
+            text-align: center;
+            font-family: 'Press Start 2P', cursive;
+            background-color: skyblue;
+            margin: 0;
+            overflow: hidden;
+        }
+
+        #send-request-container {
+            position: absolute;
+            width: 100%;
+            height: 100vh;
+            background: url("/assets/flappybirdbg.png") no-repeat center center;
+            background-size: cover;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .request-panel {
+            background-color: rgba(0, 0, 0, 0.75);
+            border: 4px solid #ffaa00;
+            border-radius: 10px;
+            padding: 20px;
+            width: 90%;
+            max-width: 500px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        h1 {
+            font-size: 28px;
+            color: white;
+            text-shadow: 4px 4px 0px black;
+            margin-bottom: 20px;
+        }
+
+        input {
+            background-color: #333;
+            border: 4px solid #ffaa00;
+            color: white;
+            padding: 12px 20px;
+            width: 80%;
+            font-family: 'Press Start 2P', cursive;
+            font-size: 14px;
+            margin-bottom: 20px;
+            border-radius: 10px;
+            outline: none;
+            transition: box-shadow 0.2s;
+            text-align: center;
+        }
+
+        input:focus {
+            box-shadow: 0 0 10px #ffaa00;
+        }
+
+        #message {
+            color: #ffcc00;
+            font-size: 14px;
+            text-shadow: 2px 2px 0px black;
+            margin: 15px 0;
+            min-height: 40px;
+        }
+
+        .controls {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            width: 100%;
+            align-items: center;
+        }
+
+        button {
+            font-size: 16px;
+            font-family: 'Press Start 2P', cursive;
+            padding: 10px 20px;
+            width: 80%;
+            max-width: 300px;
+            background-color: #ffcc00;
+            border: 4px solid #ffaa00;
+            border-radius: 10px;
+            cursor: pointer;
+            box-shadow: 4px 4px 0px rgba(0, 0, 0, 0.9);
+            transition: transform 0.1s ease;
+        }
+
+        button:hover {
+            background-color: #ffaa00;
+            transform: scale(1.05);
+        }
+
+        button:active {
+            transform: scale(0.95);
+        }
+
+        .send-btn {
+            background-color: #55aaff;
+            border-color: #3388ff;
+        }
+
+        /* Responsividad */
+        @media (max-width: 768px) {
+            .request-panel {
+                width: 95%;
+                padding: 15px;
+            }
+
+            h1 {
+                font-size: 22px;
+            }
+
+            input {
+                width: 90%;
+                font-size: 12px;
+            }
+
+            button {
+                font-size: 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+<div id="send-request-container">
+    <div class="request-panel">
+        <h1>Mandar Solicitud</h1>
+        <input type="text" id="friendUsername" placeholder="Nombre del amigo">
+        <div id="message"></div>
+        <div class="controls">
+            <button class="send-btn" onclick="sendRequest()">Enviar Solicitud</button>
+            <button onclick="location.href='friends.html'">Volver al Menú</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    if(!localStorage.getItem("token")) {
+        navigateTo("WebMenu.html");
+    }
+
+    function navigateTo(page) {
+        window.location.href = page;
+    }
+
+    function sendRequest() {
+        const friendUsername = document.getElementById("friendUsername").value.trim();
+        const token = localStorage.getItem("token");
+        const senderId = parseJwt(token).userId;
+        const messageElement = document.getElementById("message");
+
+        // Resetear mensaje
+        messageElement.textContent = "";
+
+        if (!friendUsername) {
+            messageElement.textContent = "Ingresá un nombre de usuario válido.";
+            return;
+        }
+
+        // Animación de carga
+        messageElement.textContent = "Enviando solicitud...";
+
+        // Paso 1: Obtener el ID del amigo
+        fetch(`${BASE_URL}/user/get-user-id`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ username: friendUsername })
+        })
+            .then(res => res.json())
+            .then(data => {
+                if (!data.userId) {
+                    messageElement.textContent = "Usuario no encontrado.";
+                    return;
+                }
+
+                const receiverId = data.userId;
+
+                // No enviar solicitud a sí mismo
+                if (receiverId === senderId) {
+                    messageElement.textContent = "No podés enviarte una solicitud a vos mismo.";
+                    return;
+                }
+
+                // Paso 2: Enviar la solicitud
+                return fetch(`${BASE_URL}/friends/send-friend-request`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ senderId, receiverId })
+                });
+            })
+            .then(res => {
+                if (!res) return; // Para manejar el caso en que no se continuó con la solicitud
+                return res.json();
+            })
+            .then(result => {
+                if (result && result.message) {
+                    messageElement.textContent = result.message;
+                    // Limpiar el campo si fue exitoso
+                    if (result.success) {
+                        document.getElementById("friendUsername").value = "";
+                    }
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                messageElement.textContent = "Error al enviar la solicitud.";
+            });
+    }
+
+    // Para enviar con Enter
+    document.getElementById("friendUsername").addEventListener("keypress", function(event) {
+        if (event.key === "Enter") {
+            sendRequest();
+        }
+    });
+
+    function parseJwt(token) {
+        try {
+            const base64Url = token.split('.')[1];
+            const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+            const jsonPayload = decodeURIComponent(atob(base64).split('').map(c => {
+                return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+            }).join(''));
+            return JSON.parse(jsonPayload);
+        } catch (e) {
+            return null;
+        }
+    }
+</script>
+</body>
+</html>

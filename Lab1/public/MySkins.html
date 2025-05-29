@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Mis Skins - Plappy Pird</title>
+  <script src="/env.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet" />
+  <style>
+    body {
+      font-family: 'Press Start 2P', cursive;
+      background-color: skyblue;
+      margin: 0;
+      text-align: center;
+      overflow-x: hidden;
+    }
+
+    #shop-container {
+      min-height: 100vh;
+      background: url("/assets/flappybirdbg.png") no-repeat center center;
+      background-size: cover;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding-top: 50px;
+    }
+
+    h1 {
+      font-size: 30px;
+      color: white;
+      text-shadow: 4px 4px 0px black;
+      margin-bottom: 40px;
+    }
+
+    .items {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 30px;
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+
+    .item {
+      border: 4px solid;
+      border-radius: 15px;
+      box-shadow: 4px 4px 0px black;
+      width: 200px;
+      padding: 20px;
+      text-align: center;
+      transition: transform 0.1s ease;
+    }
+
+    .item:hover {
+      transform: scale(1.05);
+    }
+
+    .item img {
+      width: 100px;
+      height: 100px;
+      image-rendering: pixelated;
+    }
+
+    .item p {
+      font-size: 10px;
+      margin: 10px 0;
+      color: black;
+    }
+
+    .equip-btn {
+      margin-top: 10px;
+      background-color: #e6e6e6;
+      border: 3px solid #020202;
+      font-family: 'Press Start 2P', cursive;
+      font-size: 10px;
+      padding: 10px;
+      cursor: pointer;
+      border-radius: 8px;
+      box-shadow: 2px 2px 0px black;
+      transition: transform 0.1s ease;
+    }
+
+    .equip-btn:hover {
+      transform: scale(1.05);
+    }
+
+    .back-btn {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      font-family: 'Press Start 2P', cursive;
+      padding: 15px 25px;
+      background-color: #ffcc00;
+      border: 4px solid #ffaa00;
+      border-radius: 10px;
+      font-size: 12px;
+      box-shadow: 4px 4px 0px black;
+      cursor: pointer;
+    }
+
+    .back-btn:hover {
+      background-color: #ffaa00;
+    }
+
+    /* Estilos por rareza */
+    .comun {
+      background-color: #b0c4de;
+      border-color: #708090;
+    }
+
+    .raro {
+      background-color: #7fffd4;
+      border-color: #20b2aa;
+    }
+
+    .epico {
+      background: violet;
+      animation: soft-glow 2s infinite alternate;
+    }
+
+    @keyframes soft-glow {
+      from {
+        box-shadow: 0 0 5px violet, 0 0 10px purple;
+      }
+      to {
+        box-shadow: 0 0 15px mediumorchid, 0 0 20px purple;
+      }
+    }
+
+    .legendario {
+      background: linear-gradient(135deg, gold, orange);
+      animation: glow 1s infinite alternate;
+      color: black;
+    }
+
+    /* Animación para legendarias */
+    @keyframes glow {
+      from {
+        box-shadow: 0 0 5px gold, 0 0 10px orange, 0 0 15px red;
+      }
+      to {
+        box-shadow: 0 0 20px yellow, 0 0 30px orange, 0 0 40px red;
+      }
+    }
+
+        #coin-display {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            display: flex;
+            align-items: center;
+            background: linear-gradient(135deg, #ffd700, #ffaa00);
+            border-radius: 25px;
+            padding: 8px 15px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+            font-family: 'Press Start 2P', cursive;
+            font-size: 16px;
+            border: 3px solid #fff;
+            color: var(--dark-accent);
+            animation: shimmer 2s infinite alternate;
+        }
+
+        /* Animación para el contador de monedas */
+        @keyframes shimmer {
+            from { box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3); }
+            to { box-shadow: 0 4px 15px rgba(255, 215, 0, 0.7); }
+        }
+
+        #coin-display img {
+            width: 28px;
+            height: 28px;
+            margin-right: 10px;
+            animation: spin 10s infinite linear;
+            border-radius: 50%;
+            border: 2px solid #fff;
+        }
+
+        /* Animación para la moneda */
+        @keyframes spin {
+            0% { transform: rotateY(0deg); }
+            100% { transform: rotateY(360deg); }
+        }
+
+
+    .loader {
+      border: 6px solid #f3f3f3;
+      border-top: 6px solid #3498db;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+      margin: 50px auto;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+<div>
+  <div id="shop-container">
+    <button class="back-btn" onclick="navigateTo('MainMenu.html')">Volver</button>
+    <h1>Mis Skins</h1>
+    <div class="items" id="skins-container">
+      <div class="loader"></div>
+    </div>
+  </div>
+  <div id="coin-display">
+    <img src="assets/coin.jpg" alt="Moneda" />
+    <span id="coin-count">0</span>
+  </div>
+</div>
+
+<script>
+  const BASE_URL = window.ENV.BASE_URL;
+  // Verificar el token al cargar
+  document.addEventListener("DOMContentLoaded", async function () {
+    if (!localStorage.getItem("token")) {
+      navigateTo("WebMenu.html");
+      return;
+    }
+
+    const token = localStorage.getItem("token");
+    const userId = parseJwt(token)?.userId;
+
+    if (!userId) {
+      console.warn("No hay user_id en localStorage");
+      navigateTo("WebMenu.html");
+      return;
+    }
+
+    // Cargar monedas
+    await updateCoinDisplay(userId);
+
+    // Cargar las skins
+    await loadSkins(userId);
+  });
+
+  function navigateTo(page) {
+    window.location.href = page;
+  }
+
+  function parseJwt(token) {
+    try {
+      const base64Url = token.split('.')[1];
+      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+      const jsonPayload = decodeURIComponent(atob(base64).split('').map(c => {
+        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+      }).join(''));
+      return JSON.parse(jsonPayload);
+    } catch (e) {
+      console.error("Error parsing JWT:", e);
+      return null;
+    }
+  }
+
+  async function updateCoinDisplay(userId) {
+    try {
+      const res = await fetch(`${BASE_URL}/game/get-coins`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({id: userId})
+      });
+
+      if (!res.ok) {
+        throw new Error(`Error getting coins: ${res.status}`);
+      }
+
+      const data = await res.json();
+      document.getElementById("coin-count").textContent = data.coins;
+    } catch (err) {
+      console.error("Error updating coin display:", err);
+    }
+  }
+
+  async function getCurrentSkinId(userId) {
+    try {
+      const res = await fetch(`${BASE_URL}/shop/get-current-skin-id`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ userId: userId })
+      });
+
+      if (!res.ok) {
+        throw new Error(`Error getting current skin: ${res.status}`);
+      }
+
+      const data = await res.json();
+      return data.skinId;
+    } catch (err) {
+      console.error("Error getting current skin ID:", err);
+      return null;
+    }
+  }
+
+  async function updateSelectedSkin(userId, skinId) {
+    try {
+      const res = await fetch(`${BASE_URL}/shop/select-skin`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ userId: userId, skinId: skinId })
+      });
+
+      if (!res.ok) {
+        throw new Error(`Error updating selected skin: ${res.status}`);
+      }
+
+      return await res.json();
+    } catch (err) {
+      console.error("Error updating selected skin:", err);
+      throw err;
+    }
+  }
+
+  async function loadSkins(userId) {
+    const container = document.getElementById("skins-container");
+
+    try {
+      // Obtener primero la skin equipada actual
+      const equippedSkinId = await getCurrentSkinId(userId);
+
+      // Luego obtener todas las skins
+      const res = await fetch(`${BASE_URL}/shop/get-skins`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId })
+      });
+
+      if (!res.ok) {
+        throw new Error(`Error getting skins: ${res.status}`);
+      }
+
+      const skins = await res.json();
+
+      // Limpiar el loader
+      container.innerHTML = "";
+
+      if (skins.length === 0) {
+        container.innerHTML = "<p>No tienes skins desbloqueadas.</p>";
+        return;
+      }
+
+      // Mostrar las skins
+      skins.forEach(skin => {
+        const div = document.createElement("div");
+
+        // Mapear rarezas a clases CSS
+        let rarityClass = "";
+        switch (skin.rarity.toLowerCase()) {
+          case "común":
+            rarityClass = "comun";
+            break;
+          case "raro":
+            rarityClass = "raro";
+            break;
+          case "épico":
+            rarityClass = "epico";
+            break;
+          case "legendario":
+            rarityClass = "legendario";
+            break;
+          default:
+            rarityClass = "comun";
+        }
+
+        div.className = `item ${rarityClass}`;
+
+        const isEquipped = skin.skin_id == equippedSkinId;
+
+        div.innerHTML = `
+          <img src="${skin.image_url}" alt="${skin.name}" />
+          <p>${skin.name}</p>
+          <p style="font-size:8px;">Rareza: ${skin.rarity}</p>
+          <button class="equip-btn">${isEquipped ? "Equipada" : "Equipar"}</button>
+        `;
+
+        const button = div.querySelector(".equip-btn");
+        button.addEventListener("click", async () => {
+          try {
+            // Mostrar feedback visual inmediato
+            document.querySelectorAll(".equip-btn").forEach(btn => {
+              btn.textContent = "Equipar";
+            });
+            button.textContent = "Equipando...";
+            button.disabled = true;
+
+            // Actualizar la skin seleccionada en el servidor
+            await updateSelectedSkin(userId, skin.skin_id);
+
+            // Actualizar la interfaz
+            document.querySelectorAll(".equip-btn").forEach(btn => {
+              btn.textContent = "Equipar";
+              btn.disabled = false;
+            });
+            button.textContent = "Equipada";
+
+            alert(`Has equipado la skin: ${skin.name}`);
+          } catch (err) {
+            alert("Error al equipar la skin. Inténtalo de nuevo.");
+            button.textContent = "Equipar";
+            button.disabled = false;
+          }
+        });
+
+        container.appendChild(div);
+      });
+    } catch (err) {
+      console.error("Error loading skins:", err);
+      container.innerHTML = "<p>Error al cargar las skins. Inténtalo de nuevo más tarde.</p>";
+    }
+  }
+</script>
+</body>
+</html>

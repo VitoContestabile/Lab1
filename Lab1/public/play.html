@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Plappy Pird</title>
+  <script src="/env.js"></script>
+  <script>
+    const BASE_URL = window.ENV.BASE_URL;
+  </script>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --primary-color: #ffcc00;
+      --secondary-color: #ffaa00;
+      --dark-accent: #222034;
+      --sky-bg: #73c8f0;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Press Start 2P', cursive;
+      background: linear-gradient(to bottom, var(--sky-bg), #e4f5fd);
+      text-align: center;
+      overflow: hidden;
+      height: 100vh;
+    }
+
+    #start-screen {
+      position: absolute;
+      width: 100%;
+      height: 100vh;
+      background: url("assets/flappybirdbg.png") no-repeat center center;
+      background-size: cover;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      animation: fadeIn 0.8s ease-in-out;
+      gap: 20px;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    h1 {
+      font-size: 48px;
+      color: white;
+      text-shadow: 4px 4px 0px var(--dark-accent), 8px 8px 0px rgba(0,0,0,0.2);
+      margin-bottom: 30px;
+      animation: pulse 3s infinite ease-in-out;
+    }
+
+    @keyframes pulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+      100% { transform: scale(1); }
+    }
+
+    .button-container {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      position: relative;
+    }
+
+    .bird-icon {
+      position: absolute;
+      width: 40px;
+      height: 40px;
+      left: -60px;
+      opacity: 0;
+      transition: opacity 0.3s ease, transform 0.3s ease;
+    }
+
+    button {
+      width: 280px;
+      font-size: 18px;
+      font-family: 'Press Start 2P', cursive;
+      padding: 16px 20px;
+      background-color: var(--primary-color);
+      color: var(--dark-accent);
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      position: relative;
+      transition: all 0.2s ease;
+      overflow: hidden;
+      box-shadow: 0 4px 0 var(--secondary-color), 0 6px 10px rgba(0,0,0,0.2);
+    }
+
+    button:hover {
+      background-color: var(--secondary-color);
+      transform: translateY(-3px);
+      box-shadow: 0 7px 0 #e99e00, 0 8px 15px rgba(0,0,0,0.3);
+    }
+
+    button:hover .bird-icon {
+      opacity: 1;
+      transform: translateX(-10px);
+    }
+
+    button:active {
+      transform: translateY(3px);
+      box-shadow: 0 2px 0 #e99e00, 0 3px 5px rgba(0,0,0,0.2);
+    }
+
+    canvas {
+      display: none;
+    }
+
+    .cloud {
+      position: absolute;
+      background: rgba(255, 255, 255, 0.7);
+      border-radius: 50%;
+      z-index: -1;
+    }
+
+    .cloud1 {
+      width: 150px;
+      height: 60px;
+      top: 10%;
+      left: 10%;
+      animation: float 20s infinite linear;
+    }
+
+    .cloud2 {
+      width: 100px;
+      height: 40px;
+      top: 25%;
+      right: 15%;
+      animation: float 15s infinite linear reverse;
+    }
+
+    @keyframes float {
+      0% { transform: translateX(0); }
+      50% { transform: translateX(100px); }
+      100% { transform: translateX(0); }
+    }
+
+    .flying-bird {
+      position: absolute;
+      width: 30px;
+      height: 20px;
+      background: url('assets/bird-silhouette.png') no-repeat center center;
+      background-size: contain;
+      z-index: -1;
+      animation: fly 25s infinite linear;
+    }
+
+    .bird1 { top: 15%; animation-duration: 30s; }
+    .bird2 { top: 35%; animation-delay: 5s; animation-duration: 20s; }
+    .bird3 { top: 25%; animation-delay: 10s; animation-duration: 35s; }
+
+    @keyframes fly {
+      0% { left: -50px; transform: translateY(0); }
+      50% { transform: translateY(30px); }
+      100% { left: calc(100% + 50px); transform: translateY(0); }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Elementos decorativos -->
+<div class="cloud cloud1"></div>
+<div class="cloud cloud2"></div>
+<div class="flying-bird bird1"></div>
+<div class="flying-bird bird2"></div>
+<div class="flying-bird bird3"></div>
+
+<!-- Pantalla de inicio -->
+<div id="start-screen">
+  <div class="button-container">
+    <button id="singleplayer-button">
+      <img src="assets/bird-silhouette.png" alt="Bird" class="bird-icon">
+      Jugar Solo
+    </button>
+    <button id="multiplayer-button">
+      <img src="assets/bird-silhouette.png" alt="Bird" class="bird-icon">
+      Multijugador
+    </button>
+  </div>
+</div>
+
+<!-- Canvas para el juego -->
+<canvas id="board"></canvas>
+
+<script>
+  const startScreen = document.getElementById('start-screen');
+
+  function loadGameScript(scriptSrc) {
+    startScreen.style.display = 'none';
+    document.getElementById('board').style.display = 'block';
+
+    if (document.querySelector(`script[src="${scriptSrc}"]`)) return;
+
+    const script = document.createElement('script');
+    script.src = scriptSrc;
+    script.onload = () => console.log(`${scriptSrc} cargado correctamente`);
+    script.onerror = () => console.error(`❌ Error al cargar ${scriptSrc}`);
+    document.body.appendChild(script);
+  }
+
+  document.getElementById('singleplayer-button').addEventListener('click', () => {
+    loadGameScript('flappybird.js');
+  });
+
+  document.getElementById('multiplayer-button').addEventListener('click', () => {
+    loadGameScript('multiplayer.js');
+  });
+</script>
+
+</body>
+</html>

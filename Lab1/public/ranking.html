@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Ranking - Plappy Pird</title>
+  <script src="/env.js"></script>
+  <script>
+    const BASE_URL = window.ENV.BASE_URL;
+  </script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
+    :root {
+      --primary-color: #FFD700;
+      --secondary-color: #ff8800;
+      --accent-color: #4CAF50;
+      --bg-gradient: linear-gradient(135deg, #87CEEB, #5D93E1);
+      --card-bg: rgba(0, 0, 0, 0.7);
+      --item-bg: rgba(255, 255, 255, 0.1);
+      --item-hover: rgba(255, 215, 0, 0.2);
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Press Start 2P', cursive;
+      background: var(--bg-gradient);
+      margin: 0;
+      overflow-x: hidden;
+      color: white;
+      min-height: 100vh;
+    }
+
+    #ranking-page {
+      position: relative;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 40px 20px;
+      background: url("/assets/flappybirdbg.png") no-repeat center center;
+      background-size: cover;
+      z-index: 1;
+    }
+
+    #ranking-page::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.4);
+      z-index: -1;
+    }
+
+    .game-title {
+      font-size: 48px;
+      color: var(--primary-color);
+      text-shadow:
+              4px 4px 0px #000,
+              -2px -2px 0 #ff6600,
+              2px -2px 0 #ff6600,
+              -2px 2px 0 #ff6600,
+              2px 2px 0 #ff6600;
+      margin-bottom: 40px;
+      animation: float 3s ease-in-out infinite;
+      letter-spacing: 2px;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-10px); }
+    }
+
+    .ranking-container {
+      width: 100%;
+      max-width: 700px;
+      background-color: var(--card-bg);
+      border-radius: 15px;
+      padding: 30px;
+      box-shadow:
+              0 10px 25px rgba(0, 0, 0, 0.5),
+              0 0 15px rgba(255, 215, 0, 0.3);
+      position: relative;
+      overflow: hidden;
+      border: 3px solid var(--primary-color);
+    }
+
+    .ranking-container::before {
+      content: '';
+      position: absolute;
+      top: -10px;
+      left: -10px;
+      right: -10px;
+      height: 70px;
+      background: var(--primary-color);
+      transform: rotate(-2deg);
+      z-index: 0;
+    }
+
+    .ranking-header {
+      position: relative;
+      z-index: 1;
+      margin-bottom: 30px;
+      display: flex;
+      justify-content: center;
+    }
+
+    .ranking-header h2 {
+      font-size: 24px;
+      color: #000;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    #ranking-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      width: 100%;
+    }
+
+    .ranking-item {
+      display: grid;
+      grid-template-columns: 0.5fr 3fr 1.5fr;
+      align-items: center;
+      margin: 15px 0;
+      padding: 15px;
+      background-color: var(--item-bg);
+      border-radius: 10px;
+      border-left: 5px solid transparent;
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .ranking-item:hover {
+      background-color: var(--item-hover);
+      transform: translateX(5px);
+      border-left: 5px solid var(--primary-color);
+    }
+
+    /* Top 3 players styling */
+    .ranking-item:nth-child(1) {
+      background-color: rgba(255, 215, 0, 0.25);
+      border: 2px solid gold;
+    }
+
+    .ranking-item:nth-child(2) {
+      background-color: rgba(192, 192, 192, 0.25);
+      border: 2px solid silver;
+    }
+
+    .ranking-item:nth-child(3) {
+      background-color: rgba(205, 127, 50, 0.25);
+      border: 2px solid #cd7f32;
+    }
+
+    .rank {
+      font-size: 18px;
+      font-weight: bold;
+      color: var(--primary-color);
+      text-shadow: 2px 2px 0px black;
+    }
+
+    .ranking-item:nth-child(1) .rank {
+      color: gold;
+      font-size: 24px;
+    }
+
+    .ranking-item:nth-child(2) .rank {
+      color: silver;
+      font-size: 22px;
+    }
+
+    .ranking-item:nth-child(3) .rank {
+      color: #cd7f32;
+      font-size: 20px;
+    }
+
+    .username {
+      font-size: 16px;
+      color: white;
+      text-decoration: none;
+      transition: all 0.3s ease;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      padding-left: 10px;
+    }
+
+    .username:hover {
+      color: var(--primary-color);
+      transform: scale(1.05);
+    }
+
+    .score {
+      font-size: 16px;
+      color: var(--accent-color);
+      text-align: right;
+      font-weight: bold;
+      text-shadow: 1px 1px 0px black;
+    }
+
+    .menu-button {
+      margin-top: 40px;
+      padding: 15px 30px;
+      font-family: 'Press Start 2P', cursive;
+      font-size: 16px;
+      background-color: var(--primary-color);
+      color: #000;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      position: relative;
+      box-shadow:
+              0 5px 0 #b39700,
+              0 10px 20px rgba(0, 0, 0, 0.3);
+      text-transform: uppercase;
+    }
+
+    .menu-button:hover {
+      background-color: var(--secondary-color);
+      transform: translateY(-2px);
+      box-shadow:
+              0 7px 0 #b36a00,
+              0 14px 25px rgba(0, 0, 0, 0.3);
+    }
+
+    .menu-button:active {
+      transform: translateY(3px);
+      box-shadow:
+              0 2px 0 #b39700,
+              0 5px 10px rgba(0, 0, 0, 0.3);
+    }
+
+    .empty-message {
+      padding: 20px;
+      text-align: center;
+      color: white;
+      font-size: 16px;
+    }
+
+    .error-message {
+      padding: 20px;
+      text-align: center;
+      color: #ff5555;
+      font-size: 16px;
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+      .game-title {
+        font-size: 32px;
+      }
+
+      .ranking-header h2 {
+        font-size: 20px;
+      }
+
+      .ranking-item {
+        grid-template-columns: 0.7fr 2fr 1.3fr;
+        padding: 12px;
+      }
+
+      .rank, .username, .score {
+        font-size: 14px;
+      }
+
+      .menu-button {
+        font-size: 14px;
+        padding: 12px 24px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .ranking-container {
+        padding: 20px 15px;
+      }
+
+      .game-title {
+        font-size: 24px;
+      }
+
+      .ranking-header h2 {
+        font-size: 16px;
+      }
+
+      .rank {
+        font-size: 12px;
+      }
+
+      .username, .score {
+        font-size: 12px;
+      }
+    }
+  </style>
+</head>
+<body>
+<div id="ranking-page">
+  <h1 class="game-title">Ranking Global</h1>
+
+  <div class="ranking-container">
+    <div class="ranking-header">
+      <h2>Top Jugadores</h2>
+    </div>
+    <ol id="ranking-list"></ol>
+  </div>
+
+  <button class="menu-button" onclick="window.location.href='MainMenu.html'">Volver al Menú</button>
+</div>
+
+<script>
+  async function cargarRanking() {
+    try {
+      const res = await fetch(`${BASE_URL}/user/ranking`);
+      console.log('Estado de la respuesta:', res.status);
+
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      console.log('Datos del ranking:', data);
+
+      const lista = document.getElementById('ranking-list');
+      lista.innerHTML = '';
+
+      if (!Array.isArray(data.ranking) || data.ranking.length === 0) {
+        const emptyMessage = document.createElement('div');
+        emptyMessage.className = 'empty-message';
+        emptyMessage.textContent = 'No hay jugadores en el ranking.';
+        lista.appendChild(emptyMessage);
+        return;
+      }
+
+      data.ranking.forEach((user, index) => {
+        const li = document.createElement('li');
+        li.className = 'ranking-item';
+
+        const rankSpan = document.createElement('span');
+        rankSpan.className = 'rank';
+        rankSpan.textContent = `${index + 1}`;
+
+        const usernameLink = document.createElement('a');
+        usernameLink.href = `perfil.html?username=${encodeURIComponent(user.username)}`;
+        usernameLink.textContent = user.username;
+        usernameLink.className = 'username';
+
+        const scoreSpan = document.createElement('span');
+        scoreSpan.className = 'score';
+        scoreSpan.textContent = `${user.score} pts`;
+
+        li.appendChild(rankSpan);
+        li.appendChild(usernameLink);
+        li.appendChild(scoreSpan);
+
+        lista.appendChild(li);
+      });
+
+    } catch (error) {
+      console.error('Error al cargar el ranking:', error);
+      const lista = document.getElementById('ranking-list');
+
+      const errorMessage = document.createElement('div');
+      errorMessage.className = 'error-message';
+      errorMessage.textContent = 'Error al cargar el ranking. Inténtalo de nuevo más tarde.';
+
+      lista.innerHTML = '';
+      lista.appendChild(errorMessage);
+    }
+  }
+
+  cargarRanking();
+</script>
+</body>
+</html>

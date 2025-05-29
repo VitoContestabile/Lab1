@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Tienda - Plappy Pird</title>
+  <script src="/env.js"></script>
+  <script>
+    const BASE_URL = window.ENV.BASE_URL;
+  </script>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet" />
+  <style>
+    body {
+      font-family: 'Press Start 2P', cursive;
+      background-color: skyblue;
+      margin: 0;
+      text-align: center;
+      overflow-x: hidden;
+    }
+
+    #shop-container {
+      min-height: 100vh;
+      background: url("assets/flappybirdbg.png") no-repeat center center;
+      background-size: cover;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding-top: 50px;
+    }
+
+    h1 {
+      font-size: 30px;
+      color: white;
+      text-shadow: 4px 4px 0px black;
+      margin-bottom: 40px;
+    }
+
+    .items {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 30px;
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+
+    .item {
+      border: 4px solid #020202;
+      border-radius: 15px;
+      box-shadow: 4px 4px 0px black;
+      width: 200px;
+      padding: 20px;
+      text-align: center;
+      transition: transform 0.1s ease;
+      position: relative;
+      background-color: lightgray; /* default */
+    }
+
+    .item:hover {
+      transform: scale(1.05);
+    }
+
+    .item img {
+      width: 100px;
+      height: 100px;
+      image-rendering: pixelated;
+    }
+
+    .item p {
+      font-size: 10px;
+      margin: 15px 0;
+      color: black;
+    }
+
+    .buy-btn {
+      margin-top: 10px;
+      background-color: #e6e6e6;
+      border: 3px solid #020202;
+      font-family: 'Press Start 2P', cursive;
+      font-size: 10px;
+      padding: 10px;
+      cursor: pointer;
+      border-radius: 8px;
+      box-shadow: 2px 2px 0px black;
+      transition: transform 0.1s ease;
+    }
+
+    .buy-btn:hover {
+      background-color: #e0e0e0;
+    }
+
+    .back-btn {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      font-family: 'Press Start 2P', cursive;
+      padding: 15px 25px;
+      background-color: #ffcc00;
+      border: 4px solid #ffaa00;
+      border-radius: 10px;
+      font-size: 12px;
+      box-shadow: 4px 4px 0px black;
+      cursor: pointer;
+    }
+
+    .back-btn:hover {
+      background-color: #ffaa00;
+    }
+
+    .toSkins-btn {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      padding: 15px 25px;
+      font-family: 'Press Start 2P', cursive;
+      background-color: #ffcc00;
+      border: 4px solid #ffaa00;
+      border-radius: 10px;
+      font-size: 12px;
+      box-shadow: 4px 4px 0px black;
+      cursor: pointer;
+    }
+
+    .toSkins-btn:hover {
+      background-color: #ffaa00;
+    }
+
+    /* Rareza aplicada al fondo del item */
+    .common {
+      background-color: lightgray;
+    }
+
+    .rare {
+      background-color: lightblue;
+    }
+
+    .epic {
+      background: violet;
+      animation: soft-glow 2s infinite alternate;
+    }
+
+    @keyframes soft-glow {
+      from {
+        box-shadow: 0 0 5px violet, 0 0 10px purple;
+      }
+      to {
+        box-shadow: 0 0 15px mediumorchid, 0 0 20px purple;
+      }
+    }
+
+    .legendary {
+      background: linear-gradient(135deg, gold, orange);
+      animation: glow 1s infinite alternate;
+      color: black;
+    }
+
+    @keyframes glow {
+      from {
+        box-shadow: 0 0 5px gold, 0 0 10px orange, 0 0 15px red;
+      }
+      to {
+        box-shadow: 0 0 20px yellow, 0 0 30px orange, 0 0 40px red;
+      }
+    }
+
+        #coin-display {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            display: flex;
+            align-items: center;
+            background: linear-gradient(135deg, #ffd700, #ffaa00);
+            border-radius: 25px;
+            padding: 8px 15px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+            font-family: 'Press Start 2P', cursive;
+            font-size: 16px;
+            border: 3px solid #fff;
+            color: var(--dark-accent);
+            animation: shimmer 2s infinite alternate;
+        }
+
+        /* Animación para el contador de monedas */
+        @keyframes shimmer {
+            from { box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3); }
+            to { box-shadow: 0 4px 15px rgba(255, 215, 0, 0.7); }
+        }
+
+        #coin-display img {
+            width: 28px;
+            height: 28px;
+            margin-right: 10px;
+            animation: spin 10s infinite linear;
+            border-radius: 50%;
+            border: 2px solid #fff;
+        }
+
+        /* Animación para la moneda */
+        @keyframes spin {
+            0% { transform: rotateY(0deg); }
+            100% { transform: rotateY(360deg); }
+        }
+
+  </style>
+</head>
+<body>
+<div id="shop-container">
+  <button class="back-btn" onclick="navigateTo('MainMenu.html')">Volver</button>
+  <button class="toSkins-btn" onclick="navigateTo('MySkins.html')">Mis Skins</button>
+  <h1>Tienda de Skins</h1>
+
+  <div class="items" id="skins-container">
+    <!-- Las skins se cargarán aquí dinámicamente -->
+  </div>
+    <div id="coin-display">
+      <img src="assets/coin.jpg" alt="Moneda" />
+      <span id="coin-count">0</span>
+    </div>
+
+
+  <script>
+
+
+
+    function getUserId(){
+      const token = localStorage.getItem("token");
+      return parseJwt(token).userId;
+    }
+
+    if(!localStorage.getItem("token")){
+      navigateTo("WebMenu.html");
+    }
+
+    function navigateTo(page) {
+      window.location.href = page;
+    }
+
+    function comprarSkin(skinId, userId) {
+      fetch(`${BASE_URL}/shop/comprar-skin`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ skinId, userId })
+      })
+      .then(res => res.json())
+      .then(data => {
+        alert(data.message);
+      })
+      .catch(err => {
+        alert("Error al comprar la skin");
+        console.error(err);
+      });
+    }
+
+    function parseJwt(token) {
+      try {
+        const base64Url = token.split('.')[1];
+        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+        const jsonPayload = decodeURIComponent(atob(base64).split('').map(c => {
+          return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+        }).join(''));
+        return JSON.parse(jsonPayload);
+      } catch (e) {
+        return null;
+      }
+    }
+
+    async function cargarSkins() {
+      const userId = getUserId();
+
+      try {
+        const response = await fetch(`${BASE_URL}/shop/get-all-skins`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({})
+        });
+
+        const skins = await response.json();
+        const container = document.getElementById("skins-container");
+
+        skins.forEach(skin => {
+          const skinDiv = document.createElement("div");
+          skinDiv.classList.add("item");
+
+          switch (skin.rarity) {
+            case "común":
+              skinDiv.classList.add("common");
+              break;
+            case "raro":
+              skinDiv.classList.add("rare");
+              break;
+            case "épico":
+              skinDiv.classList.add("epic");
+              break;
+            case "legendario":
+              skinDiv.classList.add("legendary");
+              break;
+          }
+
+          skinDiv.innerHTML = `
+            <p>${skin.name}</p>
+            <img src="${skin.image_url}" alt="${skin.name}" />
+            <p>Precio: ${skin.price} monedas</p>
+            <button class="buy-btn" onclick="comprarSkin(${skin.skin_id}, ${userId})">Comprar</button>
+          `;
+
+          container.appendChild(skinDiv);
+        });
+
+      } catch (err) {
+        console.error("Error al cargar skins:", err);
+        alert("No se pudieron cargar las skins.");
+      }
+    }
+
+    window.onload = cargarSkins;
+
+    document.addEventListener("DOMContentLoaded", async function () {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        navigateTo("WebMenu.html")
+      }
+      const userId = parseJwt(token).userId
+
+      async function updateCoinDisplay(userId) {
+        const res = await fetch(`${BASE_URL}/user/get-coins`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({id: userId})
+        });
+
+        const data = await res.json();
+        document.getElementById("coin-count").textContent = data.coins;
+      }
+
+      await updateCoinDisplay(userId);
+
+    });
+
+
+  </script>
+</div>
+</body>
+</html>

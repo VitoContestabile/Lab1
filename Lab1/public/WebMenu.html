@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Plappy Pird - Acceso</title>
+    <script src="/env.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <style>
+        /* Variables para colores consistentes */
+        :root {
+            --primary-color: #ffcc00;
+            --secondary-color: #ffaa00;
+            --dark-accent: #222034;
+            --light-accent: #8bcdff;
+            --sky-bg: #73c8f0;
+        }
+
+        /* Estilos globales */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        /* Fondo de la página con gradiente */
+        body {
+            text-align: center;
+            font-family: 'Press Start 2P', cursive;
+            background: linear-gradient(to bottom, var(--sky-bg) 0%, #e4f5fd 100%);
+            margin: 0;
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        /* Contenedor principal */
+        #game-container {
+            position: absolute;
+            width: 100%;
+            height: 100vh;
+            background: url("/assets/flappybirdbg.png") no-repeat center center;
+            background-size: cover;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            animation: fadeIn 0.8s ease-in-out;
+        }
+
+        /* Animación para el contenedor */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Logo animado */
+        h1 {
+            font-size: 60px;
+            color: white;
+            text-shadow:
+                    4px 4px 0px var(--dark-accent),
+                    8px 8px 0px rgba(0,0,0,0.2);
+            margin-bottom: 20px;
+            transform-origin: center;
+            animation: pulse 3s infinite ease-in-out;
+            letter-spacing: 2px;
+        }
+
+        /* Animación para el título */
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        /* Panel de acceso */
+        .access-panel {
+            background-color: rgba(0, 0, 0, 0.7);
+            border-radius: 15px;
+            padding: 30px;
+            width: 400px;
+            max-width: 90%;
+            border: 4px solid var(--secondary-color);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        }
+
+        /* Pestañas de navegación */
+        .tabs {
+            display: flex;
+            margin-bottom: 20px;
+        }
+
+        .tab {
+            flex: 1;
+            padding: 12px;
+            background-color: #333;
+            color: white;
+            cursor: pointer;
+            border: none;
+            font-family: 'Press Start 2P', cursive;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .tab.active {
+            background-color: var(--primary-color);
+            color: var(--dark-accent);
+        }
+
+        .tab:first-child {
+            border-top-left-radius: 8px;
+            border-bottom-left-radius: 8px;
+        }
+
+        .tab:last-child {
+            border-top-right-radius: 8px;
+            border-bottom-right-radius: 8px;
+        }
+
+        /* Formularios */
+        .form-container {
+            display: none;
+            animation: fadeIn 0.5s ease-in-out;
+        }
+
+        .form-container.active {
+            display: block;
+        }
+
+        /* Campos de entrada */
+        input {
+            width: 100%;
+            background-color: #333;
+            border: 3px solid var(--secondary-color);
+            color: white;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 8px;
+            font-size: 16px;
+            outline: none;
+            transition: all 0.3s ease;
+            font-family: 'Press Start 2P', cursive;
+            font-size: 12px;
+        }
+
+        input:focus {
+            box-shadow: 0 0 15px var(--secondary-color);
+            border-color: var(--primary-color);
+        }
+
+        /* Botones de acción */
+        .action-btn {
+            width: 100%;
+            font-size: 16px;
+            font-family: 'Press Start 2P', cursive;
+            padding: 15px;
+            background-color: var(--primary-color);
+            color: var(--dark-accent);
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-top: 10px;
+            position: relative;
+            transition: all 0.2s ease;
+            overflow: hidden;
+        }
+
+        /* Efecto 3D para botones */
+        .action-btn::before {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 5px;
+            background-color: var(--secondary-color);
+            border-bottom-left-radius: 8px;
+            border-bottom-right-radius: 8px;
+        }
+
+        /* Efecto al pasar el mouse */
+        .action-btn:hover {
+            background-color: var(--secondary-color);
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+        }
+
+        /* Efecto al hacer clic */
+        .action-btn:active {
+            transform: translateY(2px);
+            box-shadow: 0 5px 10px rgba(0,0,0,0.2);
+        }
+
+        /* Botón de volver */
+        #back-btn {
+            margin-top: 20px;
+            font-size: 12px;
+            padding: 10px 20px;
+            background-color: transparent;
+            color: white;
+            border: 2px solid white;
+            border-radius: 8px;
+            cursor: pointer;
+            font-family: 'Press Start 2P', cursive;
+            transition: all 0.3s ease;
+        }
+
+        #back-btn:hover {
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+
+        /* Nubes decorativas */
+        .cloud {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 50%;
+            z-index: -1;
+        }
+
+        .cloud1 {
+            width: 150px;
+            height: 60px;
+            top: 10%;
+            left: 10%;
+            animation: float 20s infinite linear;
+        }
+
+        .cloud2 {
+            width: 100px;
+            height: 40px;
+            top: 20%;
+            right: 15%;
+            animation: float 15s infinite linear reverse;
+        }
+
+        /* Animación para las nubes */
+        @keyframes float {
+            0% { transform: translateX(0); }
+            50% { transform: translateX(100px); }
+            100% { transform: translateX(0); }
+        }
+
+        /* Pie de página */
+        .footer {
+            position: absolute;
+            bottom: 20px;
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 8px;
+            width: 100%;
+        }
+
+        /* Mensaje de notificación */
+        .notification {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 15px 25px;
+            border-radius: 8px;
+            font-size: 14px;
+            display: none;
+            z-index: 1000;
+            border: 2px solid var(--primary-color);
+        }
+    </style>
+</head>
+<body>
+<!-- Nubes decorativas -->
+<div class="cloud cloud1"></div>
+<div class="cloud cloud2"></div>
+
+<!-- Contenedor principal -->
+<div id="game-container">
+    <h1>Plappy Pird</h1>
+
+    <!-- Panel de acceso con pestañas -->
+    <div class="access-panel">
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('login')">Login</button>
+            <button class="tab" onclick="switchTab('signup')">Registro</button>
+        </div>
+
+        <!-- Formulario de login -->
+        <div id="login-form" class="form-container active">
+            <input type="text" id="login-username" placeholder="Usuario" required>
+            <input type="password" id="login-password" placeholder="Contraseña" required>
+            <button class="action-btn" onclick="login()">Iniciar sesión</button>
+        </div>
+
+        <!-- Formulario de registro -->
+        <div id="signup-form" class="form-container">
+            <input type="text" id="signup-username" placeholder="Usuario" required>
+            <input type="email" id="signup-email" placeholder="Email" required>
+            <input type="password" id="signup-password" placeholder="Contraseña" required>
+            <button class="action-btn" onclick="signup()">Registrarse</button>
+        </div>
+    </div>
+
+    <!-- Pie de página -->
+    <div class="footer">©2025 Plappy Pird - Todos los derechos reservados</div>
+</div>
+
+<!-- Notificación -->
+<div id="notification" class="notification"></div>
+
+<script>
+    const BASE_URL = window.ENV.BASE_URL;
+    // Comprobar si el usuario ya está autenticado
+    if (localStorage.getItem("token")) {
+        navigateTo("MainMenu.html");
+    }
+
+    // Función para cambiar entre pestañas
+    function switchTab(tab) {
+        // Desactivar todas las pestañas y formularios
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.form-container').forEach(f => f.classList.remove('active'));
+
+        // Activar la pestaña y formulario seleccionados
+        if (tab === 'login') {
+            document.querySelector('.tab:first-child').classList.add('active');
+            document.getElementById('login-form').classList.add('active');
+        } else {
+            document.querySelector('.tab:last-child').classList.add('active');
+            document.getElementById('signup-form').classList.add('active');
+        }
+    }
+
+    // Función para mostrar notificaciones
+    function showNotification(message, isError = false) {
+        const notification = document.getElementById('notification');
+        notification.textContent = message;
+        notification.style.backgroundColor = isError ? 'rgba(200, 0, 0, 0.8)' : 'rgba(0, 150, 0, 0.8)';
+        notification.style.display = 'block';
+
+        // Ocultar notificación después de 3 segundos
+        setTimeout(() => {
+            notification.style.display = 'none';
+        }, 3000);
+    }
+
+    // Función para navegar a otra página
+    function navigateTo(page) {
+        window.location.href = page;
+    }
+
+    // Función de login
+    async function login() {
+        const username = document.getElementById("login-username").value;
+        const password = document.getElementById("login-password").value;
+
+        if (username === "" || password === "") {
+            showNotification("Por favor ingresa ambos campos.", true);
+            return;
+        }
+
+        try {
+            const response = await fetch(`${BASE_URL}/auth/login`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, password })
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                // Si el usuario está freezeado
+                if (response.status === 403 && data.message === 'Usuario freezeado') {
+                    navigateTo('freeze.html');
+                } else {
+                    showNotification(data.message || "Error desconocido", true);
+                }
+                return;
+            }
+
+            // Login exitoso
+            localStorage.setItem("token", data.token);
+            localStorage.setItem("user", JSON.stringify(data.user));
+
+            showNotification("¡Inicio de sesión exitoso!");
+
+            // Redirigir según el tipo de usuario
+            setTimeout(() => {
+                if (data.user && data.user.is_admin) {
+                    navigateTo("AdminMenu.html");
+                } else {
+                    navigateTo("MainMenu.html");
+                }
+            }, 1000);
+
+        } catch (error) {
+            console.error('Error:', error);
+            showNotification('Error en la conexión al servidor.', true);
+        }
+    }
+
+    // Función de registro
+    async function signup() {
+        const username = document.getElementById('signup-username').value;
+        const email = document.getElementById('signup-email').value;
+        const password = document.getElementById('signup-password').value;
+
+        if (username === "" || email === "" || password === "") {
+            showNotification("Por favor completa todos los campos.", true);
+            return;
+        }
+
+        try {
+            const response = await fetch(`${BASE_URL}/auth/register`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, email, password })
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                showNotification(`Error: ${data.message}`, true);
+                return;
+            }
+
+            // Registro exitoso
+            showNotification('Usuario registrado con éxito');
+
+            // Rellenar automáticamente el formulario de login
+            document.getElementById('login-username').value = username;
+            document.getElementById('login-password').value = password;
+
+            // Cambiar a la pestaña de login
+            setTimeout(() => {
+                switchTab('login');
+            }, 1500);
+
+        } catch (error) {
+            console.error('Error:', error);
+            showNotification('Error en la conexión al servidor.', true);
+        }
+    }
+
+    // Configurar eventos de formulario para enviar al presionar Enter
+    document.getElementById('login-password').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            login();
+        }
+    });
+
+    document.getElementById('signup-password').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            signup();
+        }
+    });
+</script>
+</body>
+</html>

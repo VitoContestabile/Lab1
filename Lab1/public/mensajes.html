@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mensajes</title>
+    <script src="/env.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <style>
+        /* Variables para colores consistentes */
+        :root {
+            --primary-color: #ffcc00;
+            --secondary-color: #ffaa00;
+            --dark-accent: #222034;
+            --light-accent: #8bcdff;
+            --sky-bg: #73c8f0;
+        }
+
+        /* Estilos globales */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        /* Fondo de la página con gradiente */
+        body {
+            text-align: center;
+            font-family: 'Press Start 2P', cursive;
+            background: linear-gradient(to bottom, var(--sky-bg) 0%, #e4f5fd 100%);
+            margin: 0;
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        /* Contenedor del menú con animación */
+        #messages-container {
+            position: absolute;
+            width: 100%;
+            height: 100vh;
+            background: url("/assets/flappybirdbg.png") no-repeat center center;
+            background-size: cover;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            animation: fadeIn 0.8s ease-in-out;
+            padding: 20px;
+        }
+
+        /* Animación para el menú */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Estilo del título */
+        h2 {
+            font-size: 45px;
+            color: white;
+            text-shadow:
+                    4px 4px 0px var(--dark-accent),
+                    8px 8px 0px rgba(0,0,0,0.2);
+            margin-bottom: 40px;
+            animation: glow 2s infinite alternate;
+        }
+
+        @keyframes glow {
+            from { text-shadow: 4px 4px 0px var(--dark-accent), 0 0 10px rgba(255,255,255,0.3); }
+            to { text-shadow: 4px 4px 0px var(--dark-accent), 0 0 30px rgba(255,255,255,0.7); }
+        }
+
+        /* Panel de mensajes */
+        .messages-panel {
+            background-color: rgba(0, 0, 0, 0.6);
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+            border: 3px solid var(--primary-color);
+            max-width: 600px;
+            width: 90%;
+            margin-bottom: 30px;
+            max-height: 400px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        /* Estilo para cuando no hay mensajes */
+        .no-messages {
+            color: white;
+            font-size: 16px;
+            text-align: center;
+            padding: 20px;
+        }
+
+        /* Estilo de los mensajes individuales */
+        .message-item {
+            background-color: rgba(255, 255, 255, 0.15);
+            border-radius: 10px;
+            padding: 15px;
+            position: relative;
+            border-left: 5px solid var(--primary-color);
+            text-align: left;
+            animation: messageAppear 0.5s ease-out;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            padding-right: 40px; /* Espacio adicional para el botón de eliminar */
+        }
+
+        @keyframes messageAppear {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .message-text {
+            color: white;
+            font-size: 14px;
+            word-wrap: break-word;
+            line-height: 1.5;
+            width: 100%; /* Asegura que el texto no se extienda bajo el botón */
+        }
+
+        .message-date {
+            color: var(--light-accent);
+            font-size: 10px;
+            text-align: right;
+        }
+
+        .delete-message {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background-color: #ff3366;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 12px;
+            padding: 5px 8px;
+            cursor: pointer;
+            font-family: 'Press Start 2P', cursive;
+            width: auto; /* Anula el width: 100% de los botones normales */
+            min-width: 30px; /* Asegura un tamaño mínimo para el botón */
+            height: auto; /* Altura automática */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2; /* Asegura que esté por encima del contenido */
+        }
+
+        .delete-message:hover {
+            background-color: #ff0044;
+        }
+
+        /* Scrollbar personalizado para el panel de mensajes */
+        .messages-panel::-webkit-scrollbar {
+            width: 10px;
+        }
+
+        .messages-panel::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+        }
+
+        .messages-panel::-webkit-scrollbar-thumb {
+            background: var(--primary-color);
+            border-radius: 10px;
+        }
+
+        .messages-panel::-webkit-scrollbar-thumb:hover {
+            background: var(--secondary-color);
+        }
+
+        /* Contenedor de botones */
+        .button-container {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            margin-top: 20px;
+            width: 280px;
+        }
+
+        /* Estilo mejorado de los botones */
+        button {
+            width: 100%;
+            font-size: 18px;
+            font-family: 'Press Start 2P', cursive;
+            padding: 16px 30px;
+            background-color: var(--primary-color);
+            color: var(--dark-accent);
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            position: relative;
+            transition: all 0.2s ease;
+            overflow: hidden;
+        }
+
+        /* Efecto 3D para los botones */
+        button::before {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 6px;
+            background-color: var(--secondary-color);
+            border-bottom-left-radius: 12px;
+            border-bottom-right-radius: 12px;
+        }
+
+        /* Efecto al pasar el mouse */
+        button:hover {
+            background-color: var(--secondary-color);
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+        }
+
+        /* Efecto al hacer clic */
+        button:active {
+            transform: translateY(3px);
+            box-shadow: 0 5px 10px rgba(0,0,0,0.2);
+        }
+
+        /* Monedas mejoradas */
+        #coin-display {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            display: flex;
+            align-items: center;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            border-radius: 50px;
+            padding: 10px 20px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            font-family: 'Press Start 2P', cursive;
+            font-size: 16px;
+            color: var(--dark-accent);
+            border: 3px solid white;
+            animation: bounce 0.5s ease;
+        }
+
+        @keyframes bounce {
+            0% { transform: scale(0); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+
+        #coin-display {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            display: flex;
+            align-items: center;
+            background: linear-gradient(135deg, #ffd700, #ffaa00);
+            border-radius: 25px;
+            padding: 8px 15px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+            font-family: 'Press Start 2P', cursive;
+            font-size: 16px;
+            border: 3px solid #fff;
+            color: var(--dark-accent);
+            animation: shimmer 2s infinite alternate;
+        }
+
+        /* Animación para el contador de monedas */
+        @keyframes shimmer {
+            from { box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3); }
+            to { box-shadow: 0 4px 15px rgba(255, 215, 0, 0.7); }
+        }
+
+        #coin-display img {
+            width: 28px;
+            height: 28px;
+            margin-right: 10px;
+            animation: spin 10s infinite linear;
+            border-radius: 50%;
+            border: 2px solid #fff;
+        }
+
+        /* Animación para la moneda */
+        @keyframes spin {
+            0% { transform: rotateY(0deg); }
+            100% { transform: rotateY(360deg); }
+        }
+
+        /* Indicador de carga */
+        .loader {
+            display: none;
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid var(--primary-color);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Nubes decorativas */
+        .cloud {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 50%;
+            z-index: -1;
+        }
+
+        .cloud1 {
+            width: 150px;
+            height: 60px;
+            top: 10%;
+            left: 10%;
+            animation: float 20s infinite linear;
+        }
+
+        .cloud2 {
+            width: 100px;
+            height: 40px;
+            top: 20%;
+            right: 15%;
+            animation: float 15s infinite linear reverse;
+        }
+
+        /* Animación para las nubes */
+        @keyframes float {
+            0% { transform: translateX(0); }
+            50% { transform: translateX(100px); }
+            100% { transform: translateX(0); }
+        }
+
+        /* Mensaje de notificación */
+        .notification {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--primary-color);
+            color: var(--dark-accent);
+            padding: 15px 20px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            font-family: 'Press Start 2P', cursive;
+            font-size: 14px;
+            display: none;
+            z-index: 1000;
+            animation: slideDown 0.5s ease-out;
+        }
+
+        @keyframes slideDown {
+            from { transform: translate(-50%, -50px); opacity: 0; }
+            to { transform: translate(-50%, 0); opacity: 1; }
+        }
+
+        /* Estilo para menú responsive */
+        @media (max-height: 700px) {
+            h2 {
+                font-size: 35px;
+                margin-bottom: 20px;
+            }
+
+            button {
+                padding: 12px 20px;
+                font-size: 16px;
+            }
+
+            .button-container {
+                gap: 10px;
+            }
+
+            .messages-panel {
+                max-height: 300px;
+            }
+        }
+    </style>
+</head>
+<body>
+<!-- Nubes decorativas -->
+<div class="cloud cloud1"></div>
+<div class="cloud cloud2"></div>
+
+<!-- Notificación -->
+<div id="notification" class="notification"></div>
+
+<div id="messages-container">
+    <h2>Mis Mensajes</h2>
+
+    <div class="messages-panel" id="messages-list">
+        <!-- Los mensajes se cargarán aquí -->
+        <div class="loader" id="loader"></div>
+        <div class="no-messages" id="no-messages">No tienes ningún mensaje</div>
+    </div>
+
+    <div class="button-container">
+        <button onclick="refreshMessages()">Actualizar</button>
+        <button onclick="location.href='MainMenu.html'">Volver al menú</button>
+    </div>
+</div>
+
+<div id="coin-display">
+    <img src="assets/coin.jpg" alt="Moneda" />
+    <span id="coin-count">0</span>
+</div>
+
+<script>
+    const BASE_URL = window.ENV.BASE_URL;
+    // Verificar si el usuario está autenticado
+    if(!localStorage.getItem("token")){
+        navigateTo("WebMenu.html");
+    }
+
+    function navigateTo(page) {
+        window.location.href = page;
+    }
+
+    // Función para mostrar notificaciones
+    function showNotification(message, isError = false) {
+        const notification = document.getElementById('notification');
+        notification.textContent = message;
+        notification.style.backgroundColor = isError ? '#ff3366' : 'var(--primary-color)';
+        notification.style.display = 'block';
+
+        // Ocultar la notificación después de 3 segundos
+        setTimeout(() => {
+            notification.style.display = 'none';
+        }, 3000);
+    }
+
+    // Función para formatear la fecha
+    function formatDate(dateString) {
+        const date = new Date(dateString);
+        const day = date.getDate().toString().padStart(2, '0');
+        const month = (date.getMonth() + 1).toString().padStart(2, '0');
+        const year = date.getFullYear();
+        const hours = date.getHours().toString().padStart(2, '0');
+        const minutes = date.getMinutes().toString().padStart(2, '0');
+
+        return `${day}/${month}/${year} ${hours}:${minutes}`;
+    }
+
+    // Función para cargar los mensajes del usuario
+    async function loadMessages() {
+        const token = localStorage.getItem("token");
+        const userId = parseJwt(token).userId;
+
+        const loader = document.getElementById('loader');
+        const noMessagesElement = document.getElementById('no-messages');
+        const messagesList = document.getElementById('messages-list');
+
+        // Mostrar el loader
+        loader.style.display = 'block';
+        noMessagesElement.style.display = 'none';
+
+        try {
+            const response = await fetch(`${BASE_URL}/user/get-messages?user_id=${userId}`);
+
+            if (!response.ok) {
+                console.error("Error en la respuesta:", response.status);
+                throw new Error(`Error al cargar los mensajes (${response.status})`);
+            }
+
+            const data = await response.json();
+            console.log("Mensajes recibidos:", data);
+
+            // Ocultar el loader
+            loader.style.display = 'none';
+
+            // Limpiar mensajes anteriores, pero mantener el loader y el aviso de no mensajes
+            const oldMessages = document.querySelectorAll('.message-item');
+            oldMessages.forEach(msg => msg.remove());
+
+            // Verificar si hay mensajes
+            if (!data.messages || data.messages.length === 0) {
+                noMessagesElement.style.display = 'block';
+                return;
+            }
+
+            // Mostrar los mensajes
+            data.messages.forEach(message => {
+                console.log("Procesando mensaje:", message);
+
+                const messageElement = document.createElement('div');
+                messageElement.className = 'message-item';
+
+                const messageText = document.createElement('div');
+                messageText.className = 'message-text';
+                messageText.textContent = message.message;
+
+                const messageDate = document.createElement('div');
+                messageDate.className = 'message-date';
+                messageDate.textContent = formatDate(message.created_at);
+
+                const deleteButton = document.createElement('button');
+                deleteButton.className = 'delete-message';
+                deleteButton.textContent = 'X';
+                // Asignar un ID de datos al botón para facilitar la depuración
+                deleteButton.setAttribute('data-message', message.message.substring(0, 20) + '...');
+                deleteButton.onclick = function() {
+                    console.log("Intentando eliminar mensaje:", message.message);
+                    deleteMessage(message.message);
+                };
+
+                messageElement.appendChild(messageText);
+                messageElement.appendChild(messageDate);
+                messageElement.appendChild(deleteButton);
+
+                messagesList.appendChild(messageElement);
+            });
+
+        } catch (error) {
+            console.error('Error:', error);
+            loader.style.display = 'none';
+            showNotification('Error al cargar los mensajes: ' + error.message, true);
+        }
+    }
+
+    // Función para eliminar un mensaje
+    async function deleteMessage(messageText) {
+        const token = localStorage.getItem("token");
+        const userId = parseJwt(token).userId;
+
+        try {
+            // Usar parámetros de consulta como espera el endpoint
+            const response = await fetch(`${BASE_URL}/user/delete-message?user_id=${userId}&text=${encodeURIComponent(messageText)}`, {
+                method: 'DELETE'
+            });
+
+            console.log("Status de la respuesta:", response.status);
+
+            // Para debugging
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error("Error del servidor:", response.status, errorText);
+                showNotification(`Error (${response.status}): ${errorText}`, true);
+                return;
+            }
+
+            const data = await response.json();
+            console.log("Datos de respuesta:", data);
+            showNotification(data.message || "Mensaje eliminado correctamente");
+
+            // Recargar mensajes después de eliminar
+            loadMessages();
+
+        } catch (error) {
+            console.error('Error al eliminar mensaje:', error);
+            showNotification('Error al eliminar el mensaje: ' + error.message, true);
+        }
+    }
+
+    // Función para actualizar los mensajes manualmente
+    function refreshMessages() {
+        loadMessages();
+
+        // Agregar efecto de "rebote" al botón
+        const refreshButton = document.querySelector('.button-container button:first-child');
+        refreshButton.style.animation = 'none';
+        setTimeout(() => {
+            refreshButton.style.animation = '';
+        }, 10);
+
+        showNotification('Mensajes actualizados');
+    }
+
+    // Función adicional para mensajes de depuración
+    function logError(message, error) {
+        console.error(message, error);
+        // Si quieres mostrar los errores en la interfaz para depurar:
+        // showNotification(`${message}: ${error.toString()}`, true);
+    }
+
+    // Función para actualizar el contador de monedas
+    async function updateCoinDisplay(userId) {
+        try {
+            const res = await fetch(`${BASE_URL}/user/get-coins`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({id: userId})
+            });
+
+            if (!res.ok) {
+                console.error("Error al obtener monedas:", res.status);
+                return;
+            }
+
+            const data = await res.json();
+            document.getElementById("coin-count").textContent = data.coins;
+        } catch (error) {
+            console.error('Error al obtener monedas:', error);
+        }
+    }
+
+    // Función para decodificar el token JWT
+    function parseJwt(token) {
+        try {
+            const base64Url = token.split('.')[1];
+            const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+            const jsonPayload = decodeURIComponent(atob(base64).split('').map(c => {
+                return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+            }).join(''));
+            return JSON.parse(jsonPayload);
+        } catch (e) {
+            return null;
+        }
+    }
+
+    // Inicializar al cargar la página
+    document.addEventListener("DOMContentLoaded", async function () {
+        const token = localStorage.getItem("token");
+        const userId = parseJwt(token).userId;
+
+        // Cargar monedas
+        await updateCoinDisplay(userId);
+
+        // Cargar mensajes
+        await loadMessages();
+
+        // Configurar intervalo para verificar nuevos mensajes cada 30 segundos
+        setInterval(loadMessages, 30000);
+    });
+</script>
+</body>
+</html>
