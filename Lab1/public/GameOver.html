@@ -157,10 +157,11 @@
         }
         // Mostrar en pantalla
 
+        const hasPlayed= localStorage.getItem("playingStatus")
 
-
-        // Actualizar en base de datos
-        await fetch(`${BASE_URL}/game/update-score-coins`, {
+        if (hasPlayed==="true"){
+          localStorage.setItem("playingStatus", "false")
+          await fetch(`${BASE_URL}/game/update-score-coins`, {
           method: "PUT",
           headers: {
             "Content-Type": "application/json"
@@ -180,6 +181,10 @@
             id: userId
           })
         });
+        }
+
+        // Actualizar en base de datos
+
       } catch (err) {
         console.error("Error al actualizar datos:", err);
       }

@@ -24,15 +24,33 @@ router.post('/register', (req, res) => {
         }
 
         // Insertar el nuevo usuario en la base de datos
-        client.query('INSERT INTO users (username, password, email) VALUES ($1, $2, $3) RETURNING id',
-            [username, password, email], (err, result) => {
+        client.query(
+            'INSERT INTO users (username, password, email) VALUES ($1, $2, $3) RETURNING id',
+            [username, password, email],
+            (err, result) => {
                 if (err) {
                     return res.status(500).json({ message: 'Error al registrar el usuario', error: err });
                 }
-                res.status(201).json({ message: 'Usuario registrado con éxito.', userId: result.rows[0].id });
-            });
+
+                const userId = result.rows[0].id;
+
+                // Insertar skin por defecto equipada para el nuevo usuario
+                client.query(
+                    'INSERT INTO skins_user (skin_id, user_id, equiped) VALUES ($1, $2, $3)',
+                    [1, userId, true],
+                    (err) => {
+                        if (err) {
+                            return res.status(500).json({ message: 'Usuario creado, pero error al asignar skin.', error: err });
+                        }
+
+                        res.status(201).json({ message: 'Usuario registrado con éxito.', userId });
+                    }
+                );
+            }
+        );
     });
 });
+
 
 // Ruta para login
 router.post('/login', (req, res) => {

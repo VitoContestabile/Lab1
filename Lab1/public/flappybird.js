@@ -105,6 +105,7 @@ function update() {
         // Guarda la puntuación en localStorage
         localStorage.setItem('lastScore', Math.floor(score));
 
+        localStorage.setItem("playingStatus", "true")
 
         // Redirige a la página de Game Over
         window.location.href = 'GameOver.html';
