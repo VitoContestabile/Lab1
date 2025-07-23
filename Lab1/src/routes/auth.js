@@ -13,7 +13,6 @@ router.post('/register', (req, res) => {
         return res.status(400).json({ message: 'Por favor completa todos los campos.' });
     }
 
-    // Verificar si el usuario ya existe
     client.query('SELECT * FROM users WHERE username = $1 OR email = $2', [username, email], (err, result) => {
         if (err) {
             return res.status(500).json({ message: 'Error al verificar el usuario', error: err });
@@ -23,7 +22,6 @@ router.post('/register', (req, res) => {
             return res.status(400).json({ message: 'El usuario ya existe.' });
         }
 
-        // Insertar el nuevo usuario en la base de datos
         client.query(
             'INSERT INTO users (username, password, email) VALUES ($1, $2, $3) RETURNING id',
             [username, password, email],
@@ -34,7 +32,7 @@ router.post('/register', (req, res) => {
 
                 const userId = result.rows[0].id;
 
-                // Insertar skin por defecto equipada para el nuevo usuario
+                // Insertar skin por defecto
                 client.query(
                     'INSERT INTO skins_user (skin_id, user_id, equiped) VALUES ($1, $2, $3)',
                     [1, userId, true],
@@ -43,13 +41,35 @@ router.post('/register', (req, res) => {
                             return res.status(500).json({ message: 'Usuario creado, pero error al asignar skin.', error: err });
                         }
 
-                        res.status(201).json({ message: 'Usuario registrado con éxito.', userId });
+                        // Insertar pipe por defecto solo si skin fue bien
+                        client.query(
+                            'INSERT INTO pipes_user (pipe_id, user_id, equiped) VALUES ($1, $2, $3)',
+                            [1, userId, true],
+                            (err) => {
+                                if (err) {
+                                    return res.status(500).json({ message: 'Usuario creado, pero error al asignar pipe.', error: err });
+                                }
+                                client.query(
+                                    'INSERT INTO backgrounds_user (background_id, user_id, equiped) VALUES ($1, $2, $3)',
+                                    [1, userId, true],
+                                    (err) => {
+                                        if (err) {
+                                            return res.status(500).json({ message: 'Usuario creado, pero error al asignar bg.', error: err });
+                                        }
+
+                                        // ✅ Solo acá se envía la respuesta final
+                                        res.status(201).json({ message: 'Usuario registrado con éxito.', userId });
+                                    }
+                                );
+                            }
+                        );
                     }
                 );
             }
         );
     });
 });
+
 
 
 // Ruta para login

@@ -1,6 +1,3 @@
-// Rest of the code remains the same as in the previous version
-// (The entire previous flappybird.js code stays unchanged)
-
 // Variables globales
 window.board = document.getElementById("board");
 window.ctx = board.getContext("2d");
@@ -19,7 +16,11 @@ let pipeY = 0;
 let openingSpace = 250;
 
 // Imágenes
-let birdImg = new Image(), topPipeImg = new Image(), bottomPipeImg = new Image();
+let birdImg = new Image(), bottomPipeImg = new Image(), backgroundImg = new Image();
+
+// Background
+let background = "skyblue"; // Puede ser un color o una imagen
+let backgroundX = 0; // Posición X del fondo para el scrolling
 
 const token = localStorage.getItem("token");
 const userId = parseJwt(token).userId;
@@ -27,6 +28,33 @@ console.log(userId)
 
 async function loadBirdSkin(userId) {
     const res = await fetch(`${BASE_URL}/shop/get-current-skin-image`, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ userId: userId })
+    });
+
+    const data = await res.json();
+    return data.image_url;
+}
+
+async function loadPipeSkin(userId) {
+    const res = await fetch(`${BASE_URL}/shop/get-current-pipe-image`, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ userId: userId })
+    });
+
+    const data = await res.json();
+    return data.image_url;
+}
+
+// Nueva función para cargar el background
+async function loadBackgroundSkin(userId) {
+    const res = await fetch(`${BASE_URL}/shop/get-current-background-image`, {
         method: "POST",
         headers: {
             "Content-Type": "application/json"
@@ -53,20 +81,39 @@ function parseJwt(token) {
 
 loadBirdSkin(userId).then(imageUrl => {
     if (imageUrl) {
-
         birdImg.src = imageUrl;
-
-        // Podés esperar a que se cargue antes de usarlo:
         birdImg.onload = () => {
-            // Ahora podés dibujar el pájaro en el canvas
-            console.log("Imagen cargada:");
+            console.log("Imagen del pájaro cargada:");
         };
     } else {
-        console.error("No se recibió image_url");
+        console.error("No se recibió image_url del pájaro");
     }
 });
-topPipeImg.src = "./assets/toppipe.png";
-bottomPipeImg.src = "./assets/bottompipe.png";
+
+loadPipeSkin(userId).then(imageUrl => {
+    if (imageUrl) {
+        bottomPipeImg.src = imageUrl;
+        bottomPipeImg.onload = () => {
+            console.log("Imagen de tubería cargada:");
+        };
+    } else {
+        console.error("No se recibió image_url de tubería");
+    }
+});
+
+// Cargar el background
+loadBackgroundSkin(userId).then(imageUrl => {
+    if (imageUrl) {
+        backgroundImg.src = imageUrl;
+        background = backgroundImg; // Cambiar de color a imagen
+        backgroundImg.onload = () => {
+            console.log("Imagen de fondo cargada:");
+        };
+    } else {
+        console.log("No se recibió image_url de fondo, usando color por defecto");
+        background = "skyblue"; // Mantener color por defecto
+    }
+});
 
 // Juego
 let velocityX = -2;  // Velocidad reducida para que arranque más despacio
@@ -91,6 +138,7 @@ function startGame() {
     gameOver = false;
     velocityX = -10;  // Velocidad más lenta
     pipeX = boardWidth; // Las tuberías salen desde el borde derecho
+    backgroundX = 0; // Reinicia la posición del fondo
 
     // Se agrega el listener para mover el pájaro
     document.addEventListener("keydown", moveBird);
@@ -100,11 +148,37 @@ function startGame() {
     pipeInterval = setInterval(placePipes, 1800);
 }
 
+function drawBackground() {
+    if (background instanceof Image && background.complete) {
+        // Si es una imagen y está cargada, dibujarla con scrolling infinito
+        let imgWidth = board.width;
+        let imgHeight = board.height;
+
+        // Dibuja la primera imagen
+        ctx.drawImage(background, backgroundX, 0, imgWidth, imgHeight);
+
+        // Dibuja la segunda imagen para crear el efecto infinito
+        ctx.drawImage(background, backgroundX + imgWidth, 0, imgWidth, imgHeight);
+
+        // Si la primera imagen se ha movido completamente fuera de la pantalla, reinicia la posición
+        if (backgroundX <= -imgWidth) {
+            backgroundX = 0;
+        }
+    } else if (typeof background === 'string') {
+        // Si es un color, rellenar con ese color (los colores no necesitan scrolling)
+        ctx.fillStyle = background;
+        ctx.fillRect(0, 0, board.width, board.height);
+    } else {
+        // Fallback: color por defecto
+        ctx.fillStyle = "skyblue";
+        ctx.fillRect(0, 0, board.width, board.height);
+    }
+}
+
 function update() {
     if (gameOver) {
         // Guarda la puntuación en localStorage
         localStorage.setItem('lastScore', Math.floor(score));
-
         localStorage.setItem("playingStatus", "true")
 
         // Redirige a la página de Game Over
@@ -114,9 +188,11 @@ function update() {
 
     ctx.clearRect(0, 0, board.width, board.height);
 
-    // Fondo
-    ctx.fillStyle = "skyblue";
-    ctx.fillRect(0, 0, board.width, board.height);
+    // Actualiza la posición del fondo para el scrolling
+    backgroundX += velocityX;
+
+    // Fondo usando la nueva función
+    drawBackground();
 
     // Gravedad y movimiento del pájaro
     velocityY += gravity;
@@ -129,7 +205,7 @@ function update() {
     for (let i = 0; i < pipeArray.length; i++) {
         let pipe = pipeArray[i];
         pipe.x += velocityX;
-        ctx.drawImage(pipe.img, pipe.x, pipe.y, pipe.width, pipe.height);
+        drawPipe(ctx, pipe);
 
         if (!pipe.passed && bird.x > pipe.x + pipe.width) {
             score += 0.5;
@@ -161,22 +237,40 @@ function placePipes() {
     if (gameOver) return;
 
     let randomPipeY = pipeY - pipeHeight / 4 - Math.random() * (pipeHeight / 2);
+
+    // Tubería superior (normal)
     pipeArray.push({
-        img: topPipeImg,
+        img: bottomPipeImg,
         x: pipeX,
         y: randomPipeY,
         width: pipeWidth,
         height: pipeHeight,
-        passed: false
+        passed: false,
+        rotated: false
     });
+
+    // Tubería inferior (rotada 180°)
     pipeArray.push({
-        img: bottomPipeImg,
+        img: bottomPipeImg, // Misma imagen
         x: pipeX,
         y: randomPipeY + pipeHeight + openingSpace,
         width: pipeWidth,
         height: pipeHeight,
-        passed: false
+        passed: false,
+        rotated: true
     });
+}
+
+function drawPipe(ctx, pipe) {
+    ctx.save();
+    ctx.translate(pipe.x + pipe.width / 2, pipe.y + pipe.height / 2);
+
+    if (pipe.rotated) {
+        ctx.rotate(Math.PI); // 180 grados en radianes
+    }
+
+    ctx.drawImage(pipe.img, -pipe.width / 2, -pipe.height / 2, pipe.width, pipe.height);
+    ctx.restore();
 }
 
 function moveBird(e) {

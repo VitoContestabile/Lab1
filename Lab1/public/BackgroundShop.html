@@ -206,8 +206,8 @@
 <body>
 <div id="shop-container">
   <button class="back-btn" onclick="navigateTo('MainMenu.html')">Volver</button>
-  <button class="toSkins-btn" onclick="navigateTo('MySkins.html')">Mis Skins</button>
-  <h1>Tienda de Skins</h1>
+  <button class="toSkins-btn" onclick="navigateTo('MyBackgrounds.html')">Mis Fondos</button>
+  <h1>Tienda de Fondos</h1>
 
   <div class="items" id="skins-container">
     <!-- Las skins se cargarán aquí dinámicamente -->
@@ -235,20 +235,20 @@
       window.location.href = page;
     }
 
-    function comprarSkin(skinId, userId) {
-      fetch(`${BASE_URL}/shop/comprar-skin`, {
+    function comprarBackground(backgroundId, userId) {
+      fetch(`${BASE_URL}/shop/comprar-background`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ skinId, userId })
+        body: JSON.stringify({ backgroundId, userId })
       })
       .then(res => res.json())
       .then(data => {
         alert(data.message);
       })
       .catch(err => {
-        alert("Error al comprar la skin");
+        alert("Error al comprar la background");
         console.error(err);
       });
     }
@@ -266,12 +266,12 @@
       }
     }
 
-async function cargarSkins() {
+async function cargarBackgrounds() {
   const userId = getUserId();
 
   try {
     // Obtener todas las skins disponibles
-    const allSkinsResponse = await fetch(`${BASE_URL}/shop/get-all-skins`, {
+    const allBackgroundsResponse = await fetch(`${BASE_URL}/shop/get-all-backgrounds`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json"
@@ -280,7 +280,7 @@ async function cargarSkins() {
     });
 
     // Obtener las skins que ya posee el usuario
-    const userSkinsResponse = await fetch(`${BASE_URL}/shop/get-skins`, {
+    const userBackgroundsResponse = await fetch(`${BASE_URL}/shop/get-backgrounds`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json"
@@ -288,11 +288,11 @@ async function cargarSkins() {
       body: JSON.stringify({ userId })
     });
 
-    const allSkins = await allSkinsResponse.json();
-    const userSkins = await userSkinsResponse.json();
+    const allBackgrounds = await allBackgroundsResponse.json();
+    const userBackgrounds = await userBackgroundsResponse.json();
 
     // Crear un Set con los IDs de las skins que ya posee el usuario para búsqueda rápida
-    const ownedSkinsIds = new Set(userSkins.map(skin => skin.skin_id));
+    const ownedBackgroundsIds = new Set(userBackgrounds.map(background => background.background_id));
 
     // Definir el orden de rareza para el sorting
     const rarityOrder = {
@@ -303,7 +303,7 @@ async function cargarSkins() {
     };
 
     // Ordenar las skins por rareza
-    const sortedSkins = allSkins.sort((a, b) => {
+    const sortedBackgrounds = allBackgrounds.sort((a, b) => {
       return rarityOrder[a.rarity] - rarityOrder[b.rarity];
     });
 
@@ -312,15 +312,15 @@ async function cargarSkins() {
     // Limpiar el container antes de agregar las skins
     container.innerHTML = '';
 
-    sortedSkins.forEach(skin => {
+    sortedBackgrounds.forEach(background => {
       const skinDiv = document.createElement("div");
       skinDiv.classList.add("item");
 
       // Verificar si el usuario ya posee esta skin
-      const isOwned = ownedSkinsIds.has(skin.skin_id);
+      const isOwned = ownedBackgroundsIds.has(background.background_id);
 
       // Agregar clase según la rareza
-      switch (skin.rarity) {
+      switch (background.rarity) {
         case "común":
           skinDiv.classList.add("common");
           break;
@@ -343,12 +343,12 @@ async function cargarSkins() {
       // Crear el botón según si ya posee la skin o no
       const buttonHTML = isOwned
         ? '<button class="buy-btn" disabled>Comprada</button>'
-        : `<button class="buy-btn" onclick="comprarSkin(${skin.skin_id}, ${userId})">Comprar</button>`;
+        : `<button class="buy-btn" onclick="comprarBackground(${background.background_id}, ${userId})">Comprar</button>`;
 
       skinDiv.innerHTML = `
-        <p>${skin.name}</p>
-        <img src="${skin.image_url}" alt="${skin.name}" />
-        <p>Precio: ${skin.price} monedas</p>
+        <p>${background.name}</p>
+        <img src="${background.image_url}" alt="${background.name}" />
+        <p>Precio: ${background.price} monedas</p>
         ${buttonHTML}
       `;
 
@@ -360,7 +360,7 @@ async function cargarSkins() {
     alert("No se pudieron cargar las skins.");
   }
 }
-    window.onload = cargarSkins;
+    window.onload = cargarBackgrounds();
 
     document.addEventListener("DOMContentLoaded", async function () {
       const token = localStorage.getItem("token");

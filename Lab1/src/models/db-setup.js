@@ -4,8 +4,8 @@ const { client } = require('../config/db');
 // Consultas SQL constantes
 const CREATE_USERS_TABLE = `
     CREATE TABLE IF NOT EXISTS users (
-                                         id SERIAL PRIMARY KEY,
-                                         email VARCHAR(255) UNIQUE NOT NULL,
+        id SERIAL PRIMARY KEY,
+        email VARCHAR(255) UNIQUE NOT NULL,
         username VARCHAR(255) UNIQUE NOT NULL,
         password VARCHAR(255) NOT NULL,
         coins INT DEFAULT 0,
@@ -26,6 +26,27 @@ const CREATE_SKINS_TABLE = `
         )
 `;
 
+const CREATE_PIPE_TABLE = `
+    CREATE TABLE IF NOT EXISTS pipes (
+        pipe_id SERIAL PRIMARY KEY,
+        name VARCHAR(100) NOT NULL,
+        image_url TEXT NOT NULL,
+        price INT NOT NULL,
+        rarity VARCHAR(50) CHECK (rarity IN ('común', 'raro', 'épico', 'legendario'))
+        )
+`;
+
+const CREATE_PIPE_USER_TABLE = `
+    CREATE TABLE IF NOT EXISTS pipes_user (
+        pipe_id INTEGER,
+        user_id INTEGER,
+        equiped BOOLEAN DEFAULT FALSE,
+        PRIMARY KEY (pipe_id, user_id),
+        FOREIGN KEY (pipe_id) REFERENCES pipes(pipe_id),
+        FOREIGN KEY (user_id) REFERENCES users(id)
+        )
+`;
+
 const CREATE_SKINS_USER_TABLE = `
     CREATE TABLE IF NOT EXISTS skins_user (
                                               skin_id INTEGER,
@@ -33,6 +54,27 @@ const CREATE_SKINS_USER_TABLE = `
                                               equiped BOOLEAN DEFAULT FALSE,
                                               PRIMARY KEY (skin_id, user_id),
         FOREIGN KEY (skin_id) REFERENCES skins(skin_id),
+        FOREIGN KEY (user_id) REFERENCES users(id)
+        )
+`;
+
+const CREATE_BG_TABLE = `
+    CREATE TABLE IF NOT EXISTS backgrounds (
+        background_id SERIAL PRIMARY KEY,
+        name VARCHAR(100) NOT NULL,
+        image_url TEXT NOT NULL,
+        price INT NOT NULL,
+        rarity VARCHAR(50) CHECK (rarity IN ('común', 'raro', 'épico', 'legendario'))
+        )
+`;
+
+const CREATE_BG_USER_TABLE = `
+    CREATE TABLE IF NOT EXISTS backgrounds_user (
+        background_id INTEGER,
+        user_id INTEGER,
+        equiped BOOLEAN DEFAULT FALSE,
+        PRIMARY KEY (background_id, user_id),
+        FOREIGN KEY (background_id) REFERENCES backgrounds(background_id),
         FOREIGN KEY (user_id) REFERENCES users(id)
         )
 `;
@@ -131,6 +173,10 @@ const setupDatabase = async () => {
         await createTable(CREATE_FRIENDS_TABLE, 'friends');
         await createTable(CREATE_FRIEND_REQUESTS_TABLE, 'friend_requests');
         await createTable(CREATE_LOBBY_TABLE, 'lobby');
+        await createTable(CREATE_PIPE_TABLE,'pipes')
+        await createTable(CREATE_PIPE_USER_TABLE,'pipes_user')
+        await createTable(CREATE_BG_TABLE,'backgrounds')
+        await createTable(CREATE_BG_USER_TABLE,'backgrounds_user')
         // Crear la tabla de mensajes
         await client.query(`
       CREATE TABLE IF NOT EXISTS messages (
