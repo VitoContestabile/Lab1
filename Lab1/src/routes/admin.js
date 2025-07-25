@@ -200,6 +200,56 @@ router.post('/modify-skin', verifyAdmin, (req, res) => {
     );
 });
 
+router.post('/modify-pipe', verifyAdmin, (req, res) => {
+    const { pipe_id, pipe_name, pipe_rarity, pipe_price } = req.body;
+
+    if (!pipe_id || !pipe_name || !pipe_rarity || !pipe_price) {
+        return res.status(400).json({ message: 'Faltan datos para modificar la skin' });
+    }
+
+    client.query(
+        'UPDATE pipes SET name = $1, rarity = $2, price = $3 WHERE pipe_id = $4',
+        [pipe_name, pipe_rarity, pipe_price, pipe_id],
+        (err, result) => {
+            if (err) {
+                console.error('Error al modificar la pipe:', err);
+                return res.status(500).json({ message: 'Error al modificar la pipe' });
+            }
+
+            if (result.rowCount === 0) {
+                return res.status(404).json({ message: 'No se encontró la pipe para modificar' });
+            }
+
+            return res.status(200).json({ message: 'Pipe modificada exitosamente' });
+        }
+    );
+});
+
+router.post('/modify-bg', verifyAdmin, (req, res) => {
+    const { background_id, background_name, background_rarity, background_price } = req.body;
+
+    if (!background_id || !background_name || !background_rarity || !background_price) {
+        return res.status(400).json({ message: 'Faltan datos para modificar el background' });
+    }
+
+    client.query(
+        'UPDATE backgrounds SET name = $1, rarity = $2, price = $3 WHERE background_id = $4',
+        [background_name, background_rarity, background_price, background_id],
+        (err, result) => {
+            if (err) {
+                console.error('Error al modificar el background:', err);
+                return res.status(500).json({ message: 'Error al modificar el background' });
+            }
+
+            if (result.rowCount === 0) {
+                return res.status(404).json({ message: 'No se encontró el background para modificar' });
+            }
+
+            return res.status(200).json({ message: 'background modificada exitosamente' });
+        }
+    );
+});
+
 // Añadir una nueva skin (solo para admins)
 router.post('/add-skin', verifyAdmin, upload.single('skin_image'), (req, res) => {
     const { skin_name, skin_rarity, skin_price } = req.body;
@@ -257,6 +307,121 @@ router.post('/add-skin', verifyAdmin, upload.single('skin_image'), (req, res) =>
         }
     );
 });
+
+router.post('/add-pipe', verifyAdmin, upload.single('skin_image'), (req, res) => {
+    const { pipe_name, pipe_rarity, pipe_price } = req.body;
+
+    // Validar que se proporcionaron todos los datos necesarios
+    if (!pipe_name || !pipe_rarity || !pipe_price) {
+        return res.status(400).json({
+            message: 'Faltan datos: se requiere pipe_name, pipe_rarity y pipe_price'
+        });
+    }
+
+    // Validar que se subió una imagen
+    if (!req.file) {
+        return res.status(400).json({
+            message: 'Se requiere una imagen para la skin'
+        });
+    }
+
+    // Validar rareza
+    const validRarities = ['común', 'raro', 'épico', 'legendario'];
+    if (!validRarities.includes(pipe_rarity)) {
+        return res.status(400).json({
+            message: 'Rareza inválida. Debe ser: común, raro, épico o legendario'
+        });
+    }
+
+    // Validar precio
+    const price = parseInt(pipe_price);
+    if (isNaN(price) || price < 0) {
+        return res.status(400).json({
+            message: 'El precio debe ser un número válido mayor o igual a 0'
+        });
+    }
+
+    // Construir la URL de la imagen
+    const image_url = `./assets/${req.file.filename}`;
+
+    // Insertar la nueva skin en la base de datos
+    client.query(
+        'INSERT INTO pipes (name, image_url, price, rarity) VALUES ($1, $2, $3, $4) RETURNING *',
+        [pipe_name, image_url, price, pipe_rarity],
+        (err, result) => {
+            if (err) {
+                console.error('Error al añadir la pipe:', err);
+                return res.status(500).json({
+                    message: 'Error al añadir la pipe a la base de datos'
+                });
+            }
+
+            // Devolver la skin creada
+            return res.status(201).json({
+                message: 'Skin añadida exitosamente',
+                skin: result.rows[0]
+            });
+        }
+    );
+});
+
+router.post('/add-bg', verifyAdmin, upload.single('background_image'), (req, res) => {
+    const { background_name, background_rarity, background_price } = req.body;
+
+    // Validar que se proporcionaron todos los datos necesarios
+    if (!background_name || !background_rarity || !background_price) {
+        return res.status(400).json({
+            message: 'Faltan datos: se requiere background_name, background_rarity y background_price'
+        });
+    }
+
+    // Validar que se subió una imagen
+    if (!req.file) {
+        return res.status(400).json({
+            message: 'Se requiere una imagen para la skin'
+        });
+    }
+
+    // Validar rareza
+    const validRarities = ['común', 'raro', 'épico', 'legendario'];
+    if (!validRarities.includes(background_rarity)) {
+        return res.status(400).json({
+            message: 'Rareza inválida. Debe ser: común, raro, épico o legendario'
+        });
+    }
+
+    // Validar precio
+    const price = parseInt(background_price);
+    if (isNaN(price) || price < 0) {
+        return res.status(400).json({
+            message: 'El precio debe ser un número válido mayor o igual a 0'
+        });
+    }
+
+    // Construir la URL de la imagen
+    const image_url = `./assets/${req.file.filename}`;
+
+    // Insertar la nueva skin en la base de datos
+    client.query(
+        'INSERT INTO backgrounds (name, image_url, price, rarity) VALUES ($1, $2, $3, $4) RETURNING *',
+        [background_name, image_url, price, background_rarity],
+        (err, result) => {
+            if (err) {
+                console.error('Error al añadir el background:', err);
+                return res.status(500).json({
+                    message: 'Error al añadir el background a la base de datos'
+                });
+            }
+
+            // Devolver la skin creada
+            return res.status(201).json({
+                message: 'Skin añadida exitosamente',
+                skin: result.rows[0]
+            });
+        }
+    );
+});
+
 
 // Middleware para manejar errores de Multer
 router.use((error, req, res, next) => {
