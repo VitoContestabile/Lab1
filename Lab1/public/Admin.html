@@ -251,8 +251,21 @@
     </div>
 </div>
 
+<!-- Modal para freeze con razón -->
+<div id="freeze-modal-overlay" class="modal-overlay">
+    <div class="message-modal">
+        <h2 id="freeze-modal-title">Freezear Usuario</h2>
+        <textarea id="freeze-reason-text" placeholder="Escribe la razón del freeze (opcional)..."></textarea>
+        <div class="modal-buttons">
+            <button id="confirm-freeze-btn">Confirmar</button>
+            <button id="cancel-freeze-btn">Cancelar</button>
+        </div>
+    </div>
+</div>
+
 <script>
     const BASE_URL = window.ENV.BASE_URL;
+
     // Variables globales para el modal de mensajes
     let currentUserId = null;
     const messageModal = document.getElementById('message-modal-overlay');
@@ -260,9 +273,22 @@
     const sendMessageBtn = document.getElementById('send-message-btn');
     const cancelMessageBtn = document.getElementById('cancel-message-btn');
 
-    // Configurar eventos de los botones del modal
+    // Variables globales para el modal de freeze
+    let currentFreezeUserId = null;
+    let currentFreezeAction = null; // 'freeze' o 'unfreeze'
+    const freezeModal = document.getElementById('freeze-modal-overlay');
+    const freezeReasonTextArea = document.getElementById('freeze-reason-text');
+    const confirmFreezeBtn = document.getElementById('confirm-freeze-btn');
+    const cancelFreezeBtn = document.getElementById('cancel-freeze-btn');
+    const freezeModalTitle = document.getElementById('freeze-modal-title');
+
+    // Configurar eventos de los botones del modal de mensajes
     sendMessageBtn.addEventListener('click', sendMessage);
     cancelMessageBtn.addEventListener('click', closeMessageModal);
+
+    // Configurar eventos de los botones del modal de freeze
+    confirmFreezeBtn.addEventListener('click', confirmFreeze);
+    cancelFreezeBtn.addEventListener('click', closeFreezeModal);
 
     // Función para abrir el modal de mensaje
     function openMessageModal(userId, username) {
@@ -276,6 +302,65 @@
     function closeMessageModal() {
         messageModal.classList.remove('active');
         currentUserId = null;
+    }
+
+    // Función para abrir el modal de freeze
+    function openFreezeModal(userId, username, isCurrentlyFrozen) {
+        currentFreezeUserId = userId;
+        currentFreezeAction = isCurrentlyFrozen ? 'unfreeze' : 'freeze';
+
+        if (isCurrentlyFrozen) {
+            freezeModalTitle.textContent = `Desfreezear a ${username}`;
+            freezeReasonTextArea.placeholder = 'Razón para desfreezear (opcional)...';
+        } else {
+            freezeModalTitle.textContent = `Freezear a ${username}`;
+            freezeReasonTextArea.placeholder = 'Razón para freezear (opcional)...';
+        }
+
+        freezeReasonTextArea.value = '';
+        freezeModal.classList.add('active');
+    }
+
+    // Función para cerrar el modal de freeze
+    function closeFreezeModal() {
+        freezeModal.classList.remove('active');
+        currentFreezeUserId = null;
+        currentFreezeAction = null;
+    }
+
+    // Función para confirmar el freeze
+    function confirmFreeze() {
+        const reason = freezeReasonTextArea.value.trim();
+        const token = localStorage.getItem('token');
+
+        fetch(`${BASE_URL}/admin/toggle-freeze`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                userId: currentFreezeUserId,
+                reason: reason || null
+            })
+        })
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(err => {
+                        throw new Error(err.message || 'Error desconocido');
+                    });
+                }
+                return response.json();
+            })
+            .then(data => {
+                alert(data.message || (data.is_freezed ? 'Usuario freezeado' : 'Usuario desfreezado'));
+                closeFreezeModal();
+                loadUsers(); // Recargar usuarios para actualizar el botón
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert(`Error al cambiar estado de freeze: ${error.message}`);
+            });
     }
 
     // Función para enviar el mensaje
@@ -386,8 +471,8 @@
                 freezeButton.textContent = 'ADMIN';
                 freezeButton.disabled = true;
             } else {
-                freezeButton.textContent = user.is_freezed ? 'FREEZED' : 'FREEZE';
-                freezeButton.onclick = () => toggleFreeze(user.id);
+                freezeButton.textContent = user.is_freezed ? 'UNFREEZE' : 'FREEZE';
+                freezeButton.onclick = () => openFreezeModal(user.id, user.username, user.is_freezed);
             }
             actionsCell.appendChild(freezeButton);
 
@@ -406,28 +491,6 @@
 
             tableBody.appendChild(row);
         });
-    }
-
-    function toggleFreeze(userId) {
-        const token = localStorage.getItem('token');
-
-        fetch(`${BASE_URL}/admin/toggle-freeze`, {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ userId })
-        })
-            .then(response => response.json())
-            .then(data => {
-                alert(data.is_freezed ? 'Usuario freezeado' : 'Usuario desfreezado');
-                loadUsers(); // Recargar usuarios para actualizar el botón
-            })
-            .catch(err => {
-                console.error('Error al freeze/desfreeze', err);
-                alert('Error al cambiar estado de freeze');
-            });
     }
 
     // Función para crear un nuevo usuario
@@ -488,10 +551,16 @@
         window.location.href = 'WebMenu.html';
     }
 
-    // Cerrar modal al hacer clic fuera de él
+    // Cerrar modales al hacer clic fuera de ellos
     messageModal.addEventListener('click', function(e) {
         if (e.target === messageModal) {
             closeMessageModal();
+        }
+    });
+
+    freezeModal.addEventListener('click', function(e) {
+        if (e.target === freezeModal) {
+            closeFreezeModal();
         }
     });
 

@@ -6,7 +6,15 @@ const { client } = require('../config/db.js');
 const { SECRET } = require('../middleware/auth');
 const multer = require('multer');
 const path = require('path');
+const nodemailer = require('nodemailer');
 
+const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+        user: 'plappypird@gmail.com',
+        pass: 'rijoetfioapqhcwj'
+    }
+});
 
 // Configuración de Multer para almacenar imágenes
 const storage = multer.diskStorage({
@@ -123,34 +131,116 @@ router.post('/create-user', verifyAdmin, (req, res) => {
     });
 });
 
-// Congelar/descongelar usuario (toggle freeze)
-router.post('/toggle-freeze', verifyAdmin, (req, res) => {
-    const { userId } = req.body;
+// Función para enviar email de freeze/unfreeze
+async function sendFreezeEmail(userEmail, username, isBeingFrozen, reason) {
+    const subject = isBeingFrozen ?
+        '🚫 Tu cuenta ha sido suspendida - Flappy Bird' :
+        '✅ Tu cuenta ha sido reactivada - Flappy Bird';
 
-    // Verificar si el usuario a freezear es admin
-    client.query('SELECT is_admin FROM users WHERE id = $1', [userId], (err2, userResult) => {
-        if (err2) {
-            console.error(err2);
-            return res.status(500).json({ message: 'Error interno' });
-        }
+    let htmlContent = `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #f9f9f9; padding: 20px;">
+            <div style="background-color: #333366; color: white; padding: 20px; text-align: center; border-radius: 10px 10px 0 0;">
+                <h1 style="margin: 0; font-size: 24px;">🐦 Flappy Bird</h1>
+            </div>
+            <div style="background-color: white; padding: 30px; border-radius: 0 0 10px 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+                <h2>Hola ${username},</h2>
+    `;
+
+    if (isBeingFrozen) {
+        htmlContent += `
+                <p style="color: #d32f2f; font-size: 16px; font-weight: bold;">Tu cuenta ha sido suspendida temporalmente.</p>
+                ${reason ? `<p><strong>Razón:</strong> ${reason}</p>` : ''}
+                <p>Durante este período, no podrás acceder al juego. Si crees que esto es un error, por favor contacta al administrador.</p>
+        `;
+    } else {
+        htmlContent += `
+                <p style="color: #388e3c; font-size: 16px; font-weight: bold;">¡Tu cuenta ha sido reactivada!</p>
+                ${reason ? `<p><strong>Motivo:</strong> ${reason}</p>` : ''}
+                <p>Ya puedes volver a jugar Flappy Bird. ¡Que disfrutes el juego!</p>
+        `;
+    }
+
+    htmlContent += `
+                <div style="margin-top: 30px; padding: 20px; background-color: #f5f5f5; border-radius: 5px; text-align: center;">
+                    <p style="margin: 0; color: #666;">Equipo de Flappy Bird</p>
+                </div>
+            </div>
+        </div>
+    `;
+
+    const mailOptions = {
+        from: 'plappypird@gmail.com',
+        to: userEmail,
+        subject: subject,
+        html: htmlContent
+    };
+
+    try {
+        await transporter.sendMail(mailOptions);
+        console.log(`Email de ${isBeingFrozen ? 'freeze' : 'unfreeze'} enviado a ${userEmail}`);
+        return true;
+    } catch (error) {
+        console.error('Error enviando email:', error);
+        return false;
+    }
+}
+
+// Endpoint modificado
+router.post('/toggle-freeze', verifyAdmin, async (req, res) => {
+    const { userId, reason } = req.body;
+
+    try {
+        // Verificar si el usuario a freezear es admin y obtener sus datos
+        const userResult = await new Promise((resolve, reject) => {
+            client.query('SELECT is_admin, email, username, is_freezed FROM users WHERE id = $1', [userId], (err, result) => {
+                if (err) reject(err);
+                else resolve(result);
+            });
+        });
 
         if (userResult.rows.length === 0) {
             return res.status(404).json({ message: 'Usuario no encontrado' });
         }
 
-        if (userResult.rows[0].is_admin) {
-            return res.status(400).json({ message: 'No se puede freezeear un administrador' });
+        const user = userResult.rows[0];
+
+        if (user.is_admin) {
+            return res.status(400).json({ message: 'No se puede freezear un administrador' });
         }
 
-        // Si no es admin, toggleamos freeze
-        client.query('UPDATE users SET is_freezed = NOT is_freezed WHERE id = $1 RETURNING is_freezed', [userId], (err3, result3) => {
-            if (err3) {
-                console.error(err3);
-                return res.status(500).json({ message: 'Error interno al freezeear' });
-            }
-            res.status(200).json({ is_freezed: result3.rows[0].is_freezed });
+        // Toggle freeze status
+        const updateResult = await new Promise((resolve, reject) => {
+            client.query('UPDATE users SET is_freezed = NOT is_freezed WHERE id = $1 RETURNING is_freezed', [userId], (err, result) => {
+                if (err) reject(err);
+                else resolve(result);
+            });
         });
-    });
+
+        const newFreezeStatus = updateResult.rows[0].is_freezed;
+        const isBeingFrozen = newFreezeStatus; // true si se está freezeando, false si se está desfreezando
+
+        // Enviar email solo si el usuario tiene email
+        if (user.email) {
+            const emailSent = await sendFreezeEmail(user.email, user.username, isBeingFrozen, reason);
+
+            if (!emailSent) {
+                console.log('Warning: No se pudo enviar el email, pero el freeze/unfreeze se completó');
+            }
+        }
+
+        const message = isBeingFrozen ?
+            `Usuario ${user.username} freezeado exitosamente` :
+            `Usuario ${user.username} desfreezado exitosamente`;
+
+        res.status(200).json({
+            is_freezed: newFreezeStatus,
+            message: message
+        });
+
+    } catch (error) {
+        console.error('Error en toggle-freeze:', error);
+        res.status(500).json({ message: 'Error interno del servidor' });
+    }
 });
 
 // mandar un nuevo Mensaje (solo para admins)

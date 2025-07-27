@@ -12,7 +12,9 @@ const CREATE_USERS_TABLE = `
         score INT DEFAULT 0,
         is_admin BOOLEAN DEFAULT FALSE,
         games_played INT DEFAULT 0,
-        is_freezed BOOLEAN DEFAULT FALSE
+        is_freezed BOOLEAN DEFAULT FALSE,
+        is_confirmed BOOLEAN DEFAULT FALSE,
+        confirmation_token TEXT
         )
 `;
 
