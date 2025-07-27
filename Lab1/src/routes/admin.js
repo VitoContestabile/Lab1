@@ -6,6 +6,7 @@ const { client } = require('../config/db.js');
 const { SECRET } = require('../middleware/auth');
 const multer = require('multer');
 const path = require('path');
+const { v4: uuidv4 } = require('uuid');
 const nodemailer = require('nodemailer');
 
 const transporter = nodemailer.createTransport({
@@ -101,31 +102,44 @@ router.post('/create-user', verifyAdmin, (req, res) => {
         return res.status(400).json({ message: 'Faltan datos para crear el usuario' });
     }
 
-    // Verificar si el usuario ya existe
-    client.query('SELECT id FROM users WHERE username = $1 OR email = $2', [username, email], (err, checkResult) => {
-        if (err) {
-            console.error('Error al verificar usuario existente:', err);
-            return res.status(500).json({ message: 'Error al verificar usuario existente' });
-        }
 
-        if (checkResult.rows.length > 0) {
-            return res.status(409).json({ message: 'El nombre de usuario o email ya existe' });
-        }
+    const confirmationToken = uuidv4();
 
-        // Crear nuevo usuario
+    client.query('SELECT * FROM users WHERE username = $1 OR email = $2', [username, email], (err, result) => {
+        if (err) return res.status(500).json({ message: 'Error verificando usuario', error: err });
+        if (result.rows.length > 0) return res.status(400).json({ message: 'El usuario ya existe.' });
+
         client.query(
-            'INSERT INTO users (username, password, email, is_admin, coins, score) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id',
-            [username, password, email, isAdmin, 0, 0],
-            (err, insertResult) => {
-                if (err) {
-                    console.error('Error al crear usuario:', err);
-                    return res.status(500).json({ message: 'Error al crear el usuario' });
-                }
+            'INSERT INTO users (username, password, email, is_confirmed, confirmation_token) VALUES ($1, $2, $3, $5, $4) RETURNING id',
+            [username, password, email, confirmationToken, isAdmin],
+            async (err, result) => {
+                if (err) return res.status(500).json({ message: 'Error al registrar', error: err });
+                const userId = result.rows[0].id;
 
-                res.status(201).json({
-                    message: 'Usuario creado exitosamente',
-                    userId: insertResult.rows[0].id
-                });
+                // Insertar valores por defecto
+                try {
+                    await client.query('INSERT INTO skins_user (skin_id, user_id, equiped) VALUES ($1, $2, true)', [1, userId]);
+                    await client.query('INSERT INTO pipes_user (pipe_id, user_id, equiped) VALUES ($1, $2, true)', [1, userId]);
+                    await client.query('INSERT INTO backgrounds_user (background_id, user_id, equiped) VALUES ($1, $2, true)', [1, userId]);
+                } catch (e) {
+                    return res.status(500).json({ message: 'Error al asignar elementos', error: e });
+                }
+                const BASE_URL = process.env.BASE_URL;
+                // Enviar email de confirmación
+                const confirmUrl = `${BASE_URL}/auth/confirm-email?token=${confirmationToken}`;
+                const mailOptions = {
+                    from: 'Flappy App <flappybird@gmail.com>',
+                    to: email,
+                    subject: 'Confirmá tu cuenta',
+                    html: `<p>Hola ${username}, hacé clic para confirmar tu cuenta:</p><a href="${confirmUrl}">${confirmUrl}</a>`
+                };
+
+                try {
+                    await transporter.sendMail(mailOptions);
+                    res.status(201).json({ message: 'Registrado. Revisá tu correo para confirmar.' });
+                } catch (mailErr) {
+                    res.status(500).json({ message: 'Usuario creado pero falló el mail.', error: mailErr });
+                }
             }
         );
     });

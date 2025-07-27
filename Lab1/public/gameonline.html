@@ -22,11 +22,12 @@
             position: absolute;
             top: 10px;
             right: 10px;
-            width: 150px;
+            width: 150px; /* Tamaño fijo para el canvas del oponente */
             height: 250px;
             background-color: rgba(0, 0, 0, 0.3);
             border: 3px solid white;
             border-radius: 10px;
+            overflow: hidden; /* Asegura que el contenido no se desborde */
         }
 
         #game-info {
@@ -128,8 +129,10 @@
     // Variables del canvas del oponente
     const opponentCanvas = document.getElementById("opponent");
     const opponentCtx = opponentCanvas.getContext("2d");
-    opponentCanvas.width = 150;
-    opponentCanvas.height = 250;
+    const OPPONENT_CANVAS_WIDTH = 150; // Constantes para el tamaño del canvas del oponente
+    const OPPONENT_CANVAS_HEIGHT = 250;
+    opponentCanvas.width = OPPONENT_CANVAS_WIDTH;
+    opponentCanvas.height = OPPONENT_CANVAS_HEIGHT;
 
     // Bird
     let bird = {
@@ -140,8 +143,8 @@
         imgSrc: null
     };
     let opponentBird = {
-        x: opponentCanvas.width / 8,
-        y: opponentCanvas.height / 2,
+        x: OPPONENT_CANVAS_WIDTH / 8, // Ajustado a la escala del canvas del oponente
+        y: OPPONENT_CANVAS_HEIGHT / 2, // Ajustado a la escala del canvas del oponente
         width: 20,
         height: 20,
         imgSrc: null
@@ -154,7 +157,7 @@
     let pipeWidth = 64;
     let pipeHeight = 512;
     let openingSpace = 250;
-    let pipeX = boardWidth;
+    let pipeX = boardWidth; // Inicializado para que las tuberías salgan desde el borde derecho
 
     // Mini pipes para el canvas del oponente
     let opponentPipeArray = [];
@@ -162,20 +165,23 @@
     // Imágenes
     let birdImg = new Image();
     let opponentBirdImg = new Image();
-    let topPipeImg = new Image();
-    let bottomPipeImg = new Image();
+    let topPipeImg = new Image(); // Ahora se cargará dinámicamente
+    let bottomPipeImg = new Image(); // Ahora se cargará dinámicamente
+    let backgroundImg = new Image(); // Imagen para el fondo del jugador local
 
-    // Cargar imágenes
-    topPipeImg.src = "./assets/toppipe.png";
-    bottomPipeImg.src = "./assets/bottompipe.png";
+    // Nuevas imágenes para el oponente
+    let opponentTopPipeImg = new Image(); // Para las tuberías del oponente
+    let opponentBottomPipeImg = new Image(); // Para las tuberías del oponente
+    let opponentBackgroundImg = new Image(); // Para el fondo del oponente
 
-    // Juego
-    let velocityX = -2;
-    let gameOver = false;
-    let score = 0;
-    let pipeInterval;
-    let countdown = 3;
-    let countdownTimer;
+    // Background
+    let background = "skyblue"; // Puede ser un color o una imagen para el jugador local
+    let backgroundX = 0; // Posición X del fondo para el scrolling (jugador local)
+
+    // Background del oponente
+    let opponentBackground = "skyblue"; // Puede ser un color o una imagen para el oponente
+    let opponentBackgroundX = 0; // Posición X del fondo para el scrolling (oponente)
+
 
     // Cargar skin del pájaro
     async function loadBirdSkin(userId) {
@@ -189,20 +195,65 @@
             });
 
             const data = await res.json();
-            console.log("🎨 Skin cargada:", data.image_url);
+            console.log("🎨 Skin cargada desde API para", userId, ":", data.image_url);
             return data.image_url;
         } catch (error) {
-            console.error("Error cargando skin:", error);
+            console.error("❌ Error cargando skin para", userId, ":", error);
             return "../assets/flappybird.png"; // Imagen de placeholder
         }
     }
 
+    // Nueva función: Cargar skin de tubería
+    async function loadPipeSkin(userId) {
+        try {
+            const res = await fetch(`${BASE_URL}/shop/get-current-pipe-image`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ userId: userId })
+            });
+
+            const data = await res.json();
+            console.log("🎨 Skin de tubería cargada desde API para", userId, ":", data.image_url);
+            return data.image_url;
+        } catch (error) {
+            console.error("❌ Error cargando skin de tubería para", userId, ":", error);
+            return "./assets/bottompipe.png"; // Imagen de placeholder
+        }
+    }
+
+    // Nueva función: Cargar skin de fondo
+    async function loadBackgroundSkin(userId) {
+        try {
+            const res = await fetch(`${BASE_URL}/shop/get-current-background-image`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ userId: userId })
+            });
+
+            const data = await res.json();
+            console.log("🎨 Skin de fondo cargada desde API para", userId, ":", data.image_url);
+            return data.image_url;
+        } catch (error) {
+            console.error("❌ Error cargando skin de fondo para", userId, ":", error);
+            return null; // Retorna null para usar el color por defecto
+        }
+    }
+
+    // Juego
+    let velocityX = -2;
+    let gameOver = false;
+    let score = 0;
+    let pipeInterval;
+    let countdown = 3;
+    let countdownTimer;
+
     // Inicializar WebSocket y configurar conexión
     function initWebSocket() {
         console.log("🔌 Iniciando conexión WebSocket...");
-
-        // Si no hay lobby o token, simular para testing
-
 
         const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
         const wsURL = `wss://${WS_URL}/ws/game/${lobbyId}?token=${token}`;
@@ -241,9 +292,6 @@
             }
         };
     }
-
-    // Simular juego local para testing
-
 
     // Variables para manejo de reconexión
     let reconnectAttempts = 0;
@@ -293,32 +341,70 @@
 
         switch (message.type) {
             case "LOBBY_INFO":
-                isHost = message.hostId === userId;
+                isHost = String(message.hostId) === String(userId);
                 opponentId = isHost ? message.guestId : message.hostId;
+                console.log(`ℹ️ LOBBY_INFO: userId=${userId}, hostId=${message.hostId}, guestId=${message.guestId}. Soy Host: ${isHost}. Oponente ID: ${opponentId}`);
 
                 // Cargar skin del oponente
                 loadBirdSkin(opponentId).then(imageUrl => {
                     if (imageUrl) {
                         opponentBirdImg.src = imageUrl;
                         opponentBird.imgSrc = imageUrl;
+                        console.log(`🎨 LOBBY_INFO: Imagen del pájaro del oponente asignada: ${imageUrl}`);
+                    } else {
+                        console.warn("⚠️ LOBBY_INFO: No se recibió URL de imagen para el oponente o falló la carga.");
                     }
+                }).catch(error => {
+                    console.error("❌ LOBBY_INFO: Error cargando skin del pájaro del oponente:", error);
                 });
+
+                // Cargar skin de tubería del oponente
+                loadPipeSkin(opponentId).then(imageUrl => {
+                    if (imageUrl) {
+                        opponentBottomPipeImg.src = imageUrl;
+                        opponentTopPipeImg.src = imageUrl; // Usamos la misma imagen para ambas
+                        console.log(`🎨 LOBBY_INFO: Imagen de tubería del oponente asignada: ${imageUrl}`);
+                    } else {
+                        console.warn("⚠️ LOBBY_INFO: No se recibió URL de imagen de tubería para el oponente.");
+                    }
+                }).catch(error => {
+                    console.error("❌ LOBBY_INFO: Error cargando skin de tubería del oponente:", error);
+                });
+
+                // Cargar skin de fondo del oponente
+                loadBackgroundSkin(opponentId).then(imageUrl => {
+                    if (imageUrl) {
+                        opponentBackgroundImg.src = imageUrl;
+                        opponentBackground = opponentBackgroundImg; // Asignar la imagen
+                        console.log(`🎨 LOBBY_INFO: Imagen de fondo del oponente asignada: ${imageUrl}`);
+                    } else {
+                        opponentBackground = "skyblue"; // Usar color por defecto
+                        console.warn("⚠️ LOBBY_INFO: No se recibió URL de imagen de fondo para el oponente.");
+                    }
+                }).catch(error => {
+                    console.error("❌ LOBBY_INFO: Error cargando skin de fondo del oponente:", error);
+                });
+
                 break;
 
             case "ALL_PLAYERS_READY":
                 bothPlayersReady = true;
+                console.log("🎉 ALL_PLAYERS_READY: Ambos jugadores listos.");
                 startCountdown();
                 break;
 
             case "GAME_START":
+                console.log("🚀 GAME_START: Señal de inicio de juego recibida.");
                 startGame();
                 break;
 
             case "PLAYER_POSITION":
                 if (message.userId !== userId) {
-                    opponentBird.y = (message.y / message.boardHeight) * opponentCanvas.height;
+                    opponentBird.y = (message.y / message.boardHeight) * OPPONENT_CANVAS_HEIGHT;
                     document.getElementById("opponent-score").textContent = message.score;
                     updateOpponentPipes(message.pipes, message.boardWidth, message.boardHeight);
+                    // Actualizar posición del fondo del oponente (escalado)
+                    opponentBackgroundX = (message.backgroundX / message.boardWidth) * OPPONENT_CANVAS_WIDTH;
                 }
                 break;
 
@@ -331,6 +417,7 @@
             case "GAME_OVER":
                 if (message.userId !== userId) {
                     opponentGameOver = true;
+                    console.log("💀 GAME_OVER: Oponente ha terminado el juego.");
                     checkEndGame();
                 }
                 break;
@@ -354,12 +441,20 @@
     // Actualizar las tuberías en miniatura del oponente
     function updateOpponentPipes(pipes, origWidth, origHeight) {
         opponentPipeArray = pipes.map(pipe => {
+            // Escalar las coordenadas y dimensiones al tamaño del canvas del oponente
+            const scaledX = (pipe.x / origWidth) * OPPONENT_CANVAS_WIDTH;
+            const scaledY = (pipe.y / origHeight) * OPPONENT_CANVAS_HEIGHT;
+            const scaledWidth = (pipe.width / origWidth) * OPPONENT_CANVAS_WIDTH;
+            const scaledHeight = (pipe.height / origHeight) * OPPONENT_CANVAS_HEIGHT;
+
             return {
-                x: (pipe.x / origWidth) * opponentCanvas.width,
-                y: (pipe.y / origHeight) * opponentCanvas.height,
-                width: (pipe.width / origWidth) * opponentCanvas.width,
-                height: (pipe.height / origHeight) * opponentCanvas.height,
-                img: pipe.isTop ? topPipeImg : bottomPipeImg
+                x: scaledX,
+                y: scaledY,
+                width: scaledWidth,
+                height: scaledHeight,
+                // Usar la imagen de tubería del oponente, asumiendo que el `rotated` define si es top/bottom
+                img: opponentBottomPipeImg, // Siempre usa la bottom para rotar
+                rotated: pipe.rotated // Importante: mantén la propiedad de rotación
             };
         });
     }
@@ -382,9 +477,9 @@
                 console.log("🚀 Countdown terminado, iniciando juego...");
 
                 // Iniciar juego directamente o enviar señal si soy host
-                if (isHost || !socket) {
+                if (isHost || !socket) { // Si eres el host o no hay socket (modo local), inicias.
                     startGame();
-                } else {
+                } else { // Si eres el invitado, esperas la señal del host o envías una señal de listo.
                     socket.send(JSON.stringify({
                         type: "GAME_START",
                         lobbyId: lobbyId
@@ -394,26 +489,118 @@
         }, 1000);
     }
 
+    // Función para dibujar el fondo con scrolling para el JUGADOR LOCAL
+    function drawBackground() {
+        if (background instanceof Image && background.complete) {
+            let imgWidth = board.width;
+            let imgHeight = board.height;
+
+            ctx.drawImage(background, backgroundX, 0, imgWidth, imgHeight);
+            ctx.drawImage(background, backgroundX + imgWidth, 0, imgWidth, imgHeight);
+
+            if (backgroundX <= -imgWidth) {
+                backgroundX = 0;
+            }
+        } else if (typeof background === 'string') {
+            ctx.fillStyle = background;
+            ctx.fillRect(0, 0, board.width, board.height);
+        } else {
+            ctx.fillStyle = "skyblue";
+            ctx.fillRect(0, 0, board.width, board.height);
+        }
+    }
+
+    // Función para dibujar el fondo con scrolling para el OPONENTE
+    function drawOpponentBackground() {
+        if (opponentBackground instanceof Image && opponentBackground.complete) {
+            let imgWidth = OPPONENT_CANVAS_WIDTH;
+            let imgHeight = OPPONENT_CANVAS_HEIGHT;
+
+            opponentCtx.drawImage(opponentBackground, opponentBackgroundX, 0, imgWidth, imgHeight);
+            opponentCtx.drawImage(opponentBackground, opponentBackgroundX + imgWidth, 0, imgWidth, imgHeight);
+
+            if (opponentBackgroundX <= -imgWidth) {
+                opponentBackgroundX = 0;
+            }
+        } else if (typeof opponentBackground === 'string') {
+            opponentCtx.fillStyle = opponentBackground;
+            opponentCtx.fillRect(0, 0, OPPONENT_CANVAS_WIDTH, OPPONENT_CANVAS_HEIGHT);
+        } else {
+            opponentCtx.fillStyle = "skyblue";
+            opponentCtx.fillRect(0, 0, OPPONENT_CANVAS_WIDTH, OPPONENT_CANVAS_HEIGHT);
+        }
+    }
+
+    // Función para dibujar la tubería con rotación (uso general)
+    function drawPipe(ctxToUse, pipe) {
+        if (!pipe.img.complete || pipe.img.naturalWidth === 0) {
+            // Fallback si la imagen no está cargada
+            ctxToUse.fillStyle = pipe.rotated ? "darkgreen" : "green";
+            ctxToUse.fillRect(pipe.x, pipe.y, pipe.width, pipe.height);
+            return;
+        }
+
+        ctxToUse.save();
+        ctxToUse.translate(pipe.x + pipe.width / 2, pipe.y + pipe.height / 2);
+
+        if (pipe.rotated) {
+            ctxToUse.rotate(Math.PI); // Rota 180 grados (pi radianes)
+        }
+
+        ctxToUse.drawImage(pipe.img, -pipe.width / 2, -pipe.height / 2, pipe.width, pipe.height);
+        ctxToUse.restore();
+    }
+
+
     // Iniciar juego
     async function startGame() {
         console.log("🎬 ¡INICIANDO startGame()!");
         gameRunning = true;
 
-        // Cargar imagen del pájaro
-
+        // Cargar imagen del pájaro del jugador local
         birdImg.src = await loadBirdSkin(userId);
+        console.log(`🎨 startGame: Pájaro del jugador local (userId=${userId}) cargado: ${birdImg.src}`);
 
 
+        // Importante: Asegurarse de que la imagen del pájaro del oponente se haya cargado antes de iniciar el bucle de animación
+        // Esto es una medida de seguridad en caso de que la promesa de LOBBY_INFO no se haya resuelto todavía.
+        if (opponentId && !opponentBirdImg.complete) { // Solo intentar cargar si opponentId existe y la imagen no está completa
+            console.log(`⚠️ startGame: Oponente ID disponible (${opponentId}) pero imagen no completa. Reintentando carga de pájaro...`);
+            const opponentImageUrl = await loadBirdSkin(opponentId);
+            if (opponentImageUrl) {
+                opponentBirdImg.src = opponentImageUrl;
+                console.log(`✅ startGame: Imagen del pájaro del oponente (opponentId=${opponentId}) recargada y asignada: ${opponentImageUrl}`);
+            } else {
+                console.warn(`❌ startGame: Falló la recarga de la imagen del oponente para ID ${opponentId}.`);
+            }
+        } else if (opponentId && opponentBirdImg.complete) {
+            console.log(`✔️ startGame: Imagen del oponente (ID=${opponentId}) ya estaba cargada.`);
+        } else {
+            console.log(`ℹ️ startGame: opponentId no disponible o no es necesario cargar imagen del oponente.`);
+        }
 
-        // También asignamos imagen visible al oponente
+        // Medida de seguridad para pipes y fondo del oponente, por si no cargaron en LOBBY_INFO
+        if (opponentId) {
+            if (!opponentBackgroundImg.complete && !opponentBackgroundImg.src) { // Si no está cargada y no tiene src asignado
+                console.log(`⚠️ startGame: Fondo de oponente no cargado. Reintentando carga...`);
+                const oppBgUrl = await loadBackgroundSkin(opponentId);
+                if (oppBgUrl) {
+                    opponentBackgroundImg.src = oppBgUrl;
+                    opponentBackground = opponentBackgroundImg;
+                    console.log(`✅ startGame: Fondo del oponente recargado y asignado: ${oppBgUrl}`);
+                }
+            }
+            if (!opponentBottomPipeImg.complete && !opponentBottomPipeImg.src) { // Si no está cargada y no tiene src asignado
+                console.log(`⚠️ startGame: Tubería de oponente no cargada. Reintentando carga...`);
+                const oppPipeUrl = await loadPipeSkin(opponentId);
+                if (oppPipeUrl) {
+                    opponentBottomPipeImg.src = oppPipeUrl;
+                    opponentTopPipeImg.src = oppPipeUrl; // Ambas usan la misma
+                    console.log(`✅ startGame: Tubería del oponente recargada y asignada: ${oppPipeUrl}`);
+                }
+            }
+        }
 
-        // Logs para confirmar que se asignó bien
-        birdImg.onload = () => {
-            console.log("✅ Imagen del pájaro cargada correctamente");
-        };
-        birdImg.onerror = () => {
-            console.error("❌ Error cargando la imagen del pájaro");
-        };
 
         // Agregar event listeners
         document.addEventListener("keydown", moveBird);
@@ -427,7 +614,12 @@
         score = 0;
         gameOver = false;
         localGameOver = false;
-        velocityX = -2;
+        velocityX = -2; // Restablecer a la velocidad inicial para el juego
+
+        pipeX = boardWidth; // Las tuberías salen desde el borde derecho
+        backgroundX = 0; // Reinicia la posición del fondo para el jugador local
+        opponentBackgroundX = 0; // Reinicia la posición del fondo para el oponente
+
 
         // Limpiar intervalo anterior y crear nuevo
         clearInterval(pipeInterval);
@@ -441,21 +633,23 @@
     function update() {
 
         if (localGameOver) {
-            console.log("🛑 Juego terminado localmente");
+            console.log("🛑 Juego terminado localmente, deteniendo update.");
             return;
         }
 
-        // Limpiar canvas
+        // Limpiar canvas principal
         ctx.clearRect(0, 0, board.width, board.height);
-        opponentCtx.clearRect(0, 0, opponentCanvas.width, opponentCanvas.height);
+        // Limpiar canvas del oponente
+        opponentCtx.clearRect(0, 0, OPPONENT_CANVAS_WIDTH, OPPONENT_CANVAS_HEIGHT);
 
-        // Fondo
-        ctx.fillStyle = "skyblue";
-        ctx.fillRect(0, 0, board.width, board.height);
-        opponentCtx.fillStyle = "skyblue";
-        opponentCtx.fillRect(0, 0, opponentCanvas.width, opponentCanvas.height);
+        // Actualiza la posición del fondo para el scrolling (jugador local)
+        backgroundX += velocityX;
 
-        // Actualizar posición del pájaro
+        // Fondo usando la nueva función para el jugador local
+        drawBackground();
+
+
+        // Actualizar posición del pájaro (jugador local)
         velocityY += gravity;
         bird.y = Math.max(bird.y + velocityY, 0);
 
@@ -463,13 +657,13 @@
         // Dibujar pájaro principal
         if (birdImg.complete && birdImg.naturalWidth > 0) {
             ctx.drawImage(birdImg, bird.x, bird.y, bird.width, bird.height);
-            console.log("✅ Pájaro dibujado correctamente");
         } else {
-            // Dibujar un rectángulo como fallback
             ctx.fillStyle = "yellow";
             ctx.fillRect(bird.x, bird.y, bird.width, bird.height);
-            console.log("⚠️ Usando rectángulo como fallback para el pájaro");
         }
+
+        // Dibuja el fondo del oponente
+        drawOpponentBackground();
 
         // Dibujar pájaro del oponente
         if (opponentBirdImg.complete && opponentBirdImg.naturalWidth > 0) {
@@ -477,6 +671,7 @@
         } else {
             opponentCtx.fillStyle = "red";
             opponentCtx.fillRect(opponentBird.x, opponentBird.y, opponentBird.width, opponentBird.height);
+            console.warn("⚠️ Oponente no cargado o no listo para dibujar. complete=", opponentBirdImg.complete, "naturalWidth=", opponentBirdImg.naturalWidth);
         }
 
         // Verificar si el pájaro tocó el suelo
@@ -488,20 +683,12 @@
             return;
         }
 
-        // Actualizar tuberías
+        // Actualizar tuberías del jugador local
         for (let i = 0; i < pipeArray.length; i++) {
             let pipe = pipeArray[i];
             pipe.x += velocityX;
+            drawPipe(ctx, pipe); // Usar la función drawPipe para las tuberías del jugador local
 
-            // Dibujar tubería
-            if (pipe.img.complete && pipe.img.naturalWidth > 0) {
-                ctx.drawImage(pipe.img, pipe.x, pipe.y, pipe.width, pipe.height);
-            } else {
-                ctx.fillStyle = "green";
-                ctx.fillRect(pipe.x, pipe.y, pipe.width, pipe.height);
-            }
-
-            // Verificar si pasó la tubería para sumar puntos
             if (!pipe.passed && bird.x > pipe.x + pipe.width) {
                 score += 0.5;
                 document.getElementById("player-score").textContent = Math.floor(score);
@@ -519,7 +706,12 @@
             }
         }
 
-        // Eliminar tuberías que salieron de pantalla
+        // Ajuste muy sutil de aceleración (opcional)
+        if (velocityX > -2.5) { // Si la velocidad es menor que -2.5 (más rápida), la incrementa (hace más lenta)
+            velocityX -= 0.0003; // Ajusta este valor para controlar la aceleración
+        }
+
+        // Eliminar tuberías que salieron de pantalla del jugador local
         while (pipeArray.length > 0 && pipeArray[0].x < -pipeWidth) {
             pipeArray.shift();
         }
@@ -527,12 +719,8 @@
         // Dibujar tuberías del oponente
         for (let i = 0; i < opponentPipeArray.length; i++) {
             let pipe = opponentPipeArray[i];
-            if (pipe.img.complete && pipe.img.naturalWidth > 0) {
-                opponentCtx.drawImage(pipe.img, pipe.x, pipe.y, pipe.width, pipe.height);
-            } else {
-                opponentCtx.fillStyle = "darkgreen";
-                opponentCtx.fillRect(pipe.x, pipe.y, pipe.width, pipe.height);
-            }
+            // Usamos drawPipe para las tuberías del oponente también
+            drawPipe(opponentCtx, pipe);
         }
 
         // Enviar posición si hay conexión WebSocket
@@ -546,12 +734,14 @@
                 boardWidth: boardWidth,
                 boardHeight: boardHeight,
                 score: Math.floor(score),
+                backgroundX: backgroundX, // Enviar la posición del fondo también
                 pipes: pipeArray.map(pipe => ({
                     x: pipe.x,
                     y: pipe.y,
                     width: pipe.width,
                     height: pipe.height,
-                    isTop: pipe.img === topPipeImg
+                    // Ya no necesitamos isTop, el rotated indica qué imagen usar (la misma y rotarla)
+                    rotated: pipe.rotated // Enviar el estado de rotación
                 }))
             }));
         }
@@ -567,24 +757,26 @@
         console.log("🚪 Generando nueva tubería");
         let randomPipeY = -pipeHeight / 4 - Math.random() * (pipeHeight / 2);
 
-        // Tubería superior
+        // Tubería superior (no rotada)
         pipeArray.push({
-            img: topPipeImg,
+            img: bottomPipeImg, // Usamos bottomPipeImg para ambas y rotamos la que sea necesaria
             x: pipeX,
             y: randomPipeY,
             width: pipeWidth,
             height: pipeHeight,
-            passed: false
+            passed: false,
+            rotated: false // No rotada
         });
 
-        // Tubería inferior
+        // Tubería inferior (rotada 180°)
         pipeArray.push({
-            img: bottomPipeImg,
+            img: bottomPipeImg, // Misma imagen
             x: pipeX,
             y: randomPipeY + pipeHeight + openingSpace,
             width: pipeWidth,
             height: pipeHeight,
-            passed: false
+            passed: false,
+            rotated: true // Rotada
         });
     }
 
@@ -717,15 +909,10 @@
         // Guardar puntuación localmente
         localStorage.setItem('lastScore', myScore);
 
-        // Enviar resultado al servidor para actualizar el estado de la lobby
-
-
         setTimeout(() => {
             window.location.href = 'MainMenu.html';
         }, 5000);
     }
-
-    // Nueva función para enviar el resultado al servidor
 
     // Función para manejar el redimensionamiento de la ventana
     function handleResize() {
@@ -788,13 +975,32 @@
     console.log("🎯 Iniciando aplicación...");
     initWebSocket();
 
-    // Cargar skin del jugador
+    // Cargar skins del jugador LOCAL al inicio
     if (userId) {
         loadBirdSkin(userId).then(imageUrl => {
             console.log("🎨 Skin del jugador cargada:", imageUrl);
             if (imageUrl) {
                 birdImg.src = imageUrl;
                 bird.imgSrc = imageUrl;
+            }
+        });
+
+        loadPipeSkin(userId).then(imageUrl => {
+            console.log("🎨 Skin de tubería cargada:", imageUrl);
+            if (imageUrl) {
+                bottomPipeImg.src = imageUrl;
+                topPipeImg.src = imageUrl;
+            }
+        });
+
+        loadBackgroundSkin(userId).then(imageUrl => {
+            console.log("🎨 Skin de fondo cargada:", imageUrl);
+            if (imageUrl) {
+                backgroundImg.src = imageUrl;
+                background = backgroundImg;
+            } else {
+                console.log("No se recibió image_url de fondo, usando color por defecto");
+                background = "skyblue";
             }
         });
     }
