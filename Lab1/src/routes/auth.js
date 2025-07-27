@@ -106,7 +106,7 @@ router.post('/login', (req, res) => {
                 if (err2) return res.status(500).json({ message: 'Error al verificar freeze.' });
 
                 if (freezeResult.rows[0]?.is_freezed) {
-                    return res.status(403).json({ message: 'Usuario freezeado.' });
+                    return res.status(403).json({ message: 'Usuario freezeado' });
                 }
 
                 const token = jwt.sign({ userId: user.id }, SECRET, { expiresIn: '1h' });

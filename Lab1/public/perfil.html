@@ -245,10 +245,6 @@
                 <div class="stat-value" id="perfil-score-big">-</div>
                 <div class="stat-label">PUNTOS</div>
             </div>
-            <div class="stat-box">
-                <div class="stat-value" id="perfil-coins-big">-</div>
-                <div class="stat-label">MONEDAS</div>
-            </div>
         </div>
 
         <div class="info-card">
@@ -263,10 +259,6 @@
             <div class="info-line">
                 <div class="info-label">🕹️ Partidas:</div>
                 <div class="info-value" id="perfil-partidas">Cargando...</div>
-            </div>
-            <div class="info-line">
-                <div class="info-label">💰 Monedas:</div>
-                <div class="info-value" id="perfil-coins">Cargando...</div>
             </div>
         </div>
 
@@ -284,9 +276,7 @@
         document.getElementById('perfil-username').textContent = "No especificado";
         document.getElementById('perfil-score').textContent = "-";
         document.getElementById('perfil-partidas').textContent = "-";
-        document.getElementById('perfil-coins').textContent = "-";
         document.getElementById('perfil-score-big').textContent = "0";
-        document.getElementById('perfil-coins-big').textContent = "0";
     } else {
         fetch(`${BASE_URL}/user/perfil/${encodeURIComponent(username)}`)
             .then(res => {
@@ -298,11 +288,9 @@
                 document.getElementById('perfil-username').textContent = data.username;
                 document.getElementById('perfil-score').textContent = `${data.score} pts`;
                 document.getElementById('perfil-partidas').textContent = data.games_played ?? "N/A";
-                document.getElementById('perfil-coins').textContent = data.coins ?? "N/A";
 
                 // Actualizar también los valores destacados
                 document.getElementById('perfil-score-big').textContent = data.score ?? "0";
-                document.getElementById('perfil-coins-big').textContent = data.coins ?? "0";
 
                 // Personalizar avatar basado en username si está disponible
                 const avatarContainer = document.querySelector('.avatar-container');
@@ -327,7 +315,6 @@
                 document.getElementById('perfil-partidas').textContent = "-";
                 document.getElementById('perfil-coins').textContent = "-";
                 document.getElementById('perfil-score-big').textContent = "0";
-                document.getElementById('perfil-coins-big').textContent = "0";
             });
     }
 </script>

@@ -246,6 +246,7 @@
       .then(res => res.json())
       .then(data => {
         alert(data.message);
+        location.reload();
       })
       .catch(err => {
         alert("Error al comprar la background");

@@ -2,76 +2,115 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Cuenta Freezeada</title>
+  <title>Cuenta Bloqueada - Arcade Edition</title>
   <script src="/env.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
   <style>
     body {
-      background-color: #333366;
-      color: white;
-      font-family: 'Press Start 2P', cursive;
+      background-color: #383838; /* Darker, almost black for arcade cabinet feel */
+      color: #FFFFFF; /* White for main text */
+      font-family: 'Press Start 2P', cursive; /* The quintessential pixel font */
       text-align: center;
-      padding: 50px;
+      padding: 20px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      margin: 0;
+      /* Optional: subtle pixel background texture */
+      background-image:
+              repeating-linear-gradient(0deg, #222 0px, #222 1px, transparent 1px, transparent 2px),
+              repeating-linear-gradient(90deg, #222 0px, #222 1px, transparent 1px, transparent 2px);
+      background-size: 2px 2px;
+    }
+    .arcade-screen {
+      max-width: 500px; /* Constrain width to mimic screen */
+      width: 90%; /* Responsive width */
+      padding: 30px;
+      background-color: #000000; /* Black screen */
+      border: 8px solid #888888; /* Arcade cabinet border */
+      border-radius: 15px; /* Slightly rounded corners */
+      box-shadow:
+              0 0 0 10px #555555, /* Outer cabinet glow */
+              0 0 0 18px #444444, /* Even outerer glow */
+              inset 0 0 20px rgba(0, 255, 0, 0.4); /* Green screen effect */
+      animation: scanline 0.5s infinite steps(1); /* Subtle scanline effect */
     }
     h1 {
-      color: #ff3366;
-      font-size: 32px;
-      margin-bottom: 20px;
-      text-shadow: 2px 2px 0 black;
+      color: #FFFF00; /* Bright yellow, classic arcade color */
+      font-size: 28px; /* Slightly adjusted for pixel readability */
+      margin-bottom: 15px;
+      text-shadow: 2px 2px 0 #FF0000; /* Red shadow for pop */
     }
     p {
-      font-size: 16px;
-      margin-bottom: 30px;
+      font-size: 14px; /* Pixelated font needs to be a bit smaller */
+      margin-bottom: 25px;
+      color: #00FF00; /* Green text for a classic arcade feel */
+      line-height: 1.6; /* Adjust line height for readability */
     }
     .frozen-icon {
-      font-size: 100px;
-      margin-bottom: 30px;
-      animation: shake 1s infinite;
+      font-size: 70px; /* Adjusted size for pixel icon */
+      margin-bottom: 20px;
+      color: #00FFFF; /* Cyan/Light Blue for icy pixel */
+      animation: bouncePixel 0.8s infinite alternate ease-in-out; /* Pixel bounce animation */
+      text-shadow: 2px 2px 0 #00AAAA; /* Shadow for depth */
+      -webkit-font-smoothing: none; /* Crucial for sharp pixel appearance */
+      image-rendering: pixelated; /* Ensure icon stays pixelated */
+      image-rendering: -moz-crisp-edges;
+      image-rendering: crisp-edges;
     }
     button {
       font-family: 'Press Start 2P', cursive;
       padding: 10px 20px;
-      background-color: #ffcc00;
-      border: 3px solid #ffaa00;
-      border-radius: 10px;
-      color: #333366;
-      font-size: 14px;
+      background-color: #00CC00; /* Bright green button */
+      border: 4px solid #009900; /* Darker green border */
+      border-radius: 5px; /* Blockier corners */
+      color: #FFFFFF; /* White text */
+      font-size: 16px;
       cursor: pointer;
-      box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.7);
+      box-shadow: 4px 4px 0 #006600; /* Chunky shadow */
+      transition: all 0.1s ease-out; /* Quick transition */
     }
     button:hover {
-      background-color: #ffaa00;
+      background-color: #00FF00; /* Lighter green on hover */
+      box-shadow: 2px 2px 0 #009900; /* Smaller shadow on hover */
+      transform: translate(2px, 2px); /* Simulate button press */
     }
-    @keyframes shake {
-      0% { transform: translate(1px, 1px) rotate(0deg); }
-      10% { transform: translate(-1px, -2px) rotate(-1deg); }
-      20% { transform: translate(-3px, 0px) rotate(1deg); }
-      30% { transform: translate(3px, 2px) rotate(0deg); }
-      40% { transform: translate(1px, -1px) rotate(1deg); }
-      50% { transform: translate(-1px, 2px) rotate(-1deg); }
-      60% { transform: translate(-3px, 1px) rotate(0deg); }
-      70% { transform: translate(3px, 1px) rotate(-1deg); }
-      80% { transform: translate(-1px, -1px) rotate(1deg); }
-      90% { transform: translate(1px, 2px) rotate(0deg); }
-      100% { transform: translate(1px, -2px) rotate(-1deg); }
+    button:active {
+      background-color: #009900;
+      box-shadow: none;
+      transform: translate(4px, 4px);
+    }
+
+    /* Keyframes for pixel animations */
+    @keyframes bouncePixel {
+      0% { transform: translateY(0px); }
+      100% { transform: translateY(-10px); }
+    }
+
+    @keyframes scanline {
+      0% { background-position: 0% 0%; }
+      100% { background-position: 0% 100%; }
     }
   </style>
 </head>
 <body>
 
-<div class="frozen-icon">❄️</div>
+<div class="arcade-screen">
+  <div class="frozen-icon">🧊</div> <h1>¡CUENTA BLOQUEADA!</h1>
 
-<h1>¡CUENTA BLOQUEADA!</h1>
+  <p>TU CUENTA HA SIDO CONGELADA.<br>VERIFICA TU EMAIL.</p>
 
-<p>Tu cuenta ha sido congelada.<br>Contactá a un administrador para más información.</p>
-
-<button onclick="logout()">Cerrar sesión</button>
+  <button onclick="logout()">Cerrar Sesión</button>
+</div>
 
 <script>
-  const BASE_URL = window.ENV.BASE_URL;
+  // Ensure BASE_URL is defined if used elsewhere
+  const BASE_URL = window.ENV ? window.ENV.BASE_URL : '';
   function logout() {
     localStorage.removeItem('token');
-    window.location.href = 'WebMenu.html';
+    // Simulate Flappy Bird game over redirect
+    window.location.href = 'WebMenu.html?game_over=true';
   }
 </script>
 
