@@ -35,7 +35,7 @@
 
         /* Contenedor principal */
         #game-container {
-            position: absolute;
+            position: relative;
             width: 100%;
             height: 100vh;
             background: url("/assets/flappybirdbg.png") no-repeat center center;
@@ -45,6 +45,7 @@
             align-items: center;
             justify-content: center;
             animation: fadeIn 0.8s ease-in-out;
+            z-index: 1;
         }
 
         /* Animación para el contenedor */
@@ -64,6 +65,8 @@
             transform-origin: center;
             animation: pulse 3s infinite ease-in-out;
             letter-spacing: 2px;
+            z-index: 10;
+            position: relative;
         }
 
         /* Animación para el título */
@@ -82,6 +85,8 @@
             max-width: 90%;
             border: 4px solid var(--secondary-color);
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            z-index: 10;
+            position: relative;
         }
 
         /* Pestañas de navegación */
@@ -209,12 +214,12 @@
             background-color: rgba(255, 255, 255, 0.2);
         }
 
-        /* Nubes decorativas */
+        /* Nubes decorativas - ARREGLADO */
         .cloud {
             position: absolute;
             background: rgba(255, 255, 255, 0.8);
             border-radius: 50%;
-            z-index: -1;
+            z-index: 2; /* Cambiado de -1 a 2 para que esté por encima del fondo pero debajo del contenido */
         }
 
         .cloud1 {
@@ -233,6 +238,23 @@
             animation: float 15s infinite linear reverse;
         }
 
+        /* Nubes adicionales para más dinamismo */
+        .cloud3 {
+            width: 120px;
+            height: 50px;
+            top: 60%;
+            left: 5%;
+            animation: float 25s infinite linear;
+        }
+
+        .cloud4 {
+            width: 80px;
+            height: 35px;
+            top: 70%;
+            right: 20%;
+            animation: float 18s infinite linear reverse;
+        }
+
         /* Animación para las nubes */
         @keyframes float {
             0% { transform: translateX(0); }
@@ -247,6 +269,7 @@
             color: rgba(255, 255, 255, 0.7);
             font-size: 8px;
             width: 100%;
+            z-index: 10;
         }
 
         /* Mensaje de notificación */
@@ -264,12 +287,67 @@
             z-index: 1000;
             border: 2px solid var(--primary-color);
         }
+
+        /* Partículas flotantes adicionales */
+        .particle {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.6);
+            border-radius: 50%;
+            z-index: 2;
+            animation: floatUp 15s infinite linear;
+        }
+
+        .particle1 {
+            width: 8px;
+            height: 8px;
+            top: 80%;
+            left: 25%;
+            animation-delay: 0s;
+        }
+
+        .particle2 {
+            width: 12px;
+            height: 12px;
+            top: 85%;
+            left: 70%;
+            animation-delay: 5s;
+        }
+
+        .particle3 {
+            width: 6px;
+            height: 6px;
+            top: 90%;
+            left: 45%;
+            animation-delay: 10s;
+        }
+
+        @keyframes floatUp {
+            0% {
+                transform: translateY(0) rotate(0deg);
+                opacity: 0.6;
+            }
+            50% {
+                transform: translateY(-200px) rotate(180deg);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(-400px) rotate(360deg);
+                opacity: 0;
+            }
+        }
     </style>
 </head>
 <body>
 <!-- Nubes decorativas -->
 <div class="cloud cloud1"></div>
 <div class="cloud cloud2"></div>
+<div class="cloud cloud3"></div>
+<div class="cloud cloud4"></div>
+
+<!-- Partículas flotantes -->
+<div class="particle particle1"></div>
+<div class="particle particle2"></div>
+<div class="particle particle3"></div>
 
 <!-- Contenedor principal -->
 <div id="game-container">
@@ -306,7 +384,8 @@
 <div id="notification" class="notification"></div>
 
 <script>
-    const BASE_URL = window.ENV.BASE_URL;
+    const BASE_URL = window.ENV?.BASE_URL || 'http://localhost:3000';
+
     // Comprobar si el usuario ya está autenticado
     if (localStorage.getItem("token")) {
         navigateTo("MainMenu.html");

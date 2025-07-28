@@ -8,7 +8,7 @@ let birds = [
     { x: 0, y: 0, width: 45, height: 45, velocityY: 0, score: 0, keyCode: "ArrowUp", alive: true }  // Player 2 (right)
 ];
 
-let gravity = 0.3;  // Ajusta la caída del pájaro
+let gravity = 0.23;  // Mantener la misma gravedad del juego solo
 
 // Pipes - separate arrays for each player
 let pipeArrays = [[], []];
@@ -17,10 +17,15 @@ let openingSpace = 250;
 
 // Imágenes
 let birdImgs = [new Image(), new Image()];
-let topPipeImg = new Image(), bottomPipeImg = new Image();
+let bottomPipeImg = new Image(); // Usar solo una imagen de tubería como en el juego solo
+let backgroundImg = new Image();
+
+// Background
+let background = "skyblue"; // Puede ser un color o una imagen
+let backgroundX = 0; // Posición X del fondo para el scrolling
 
 // Juego
-let velocityX = -10;  // Velocidad reducida para que arranque más despacio
+let velocityX = -2;  // Velocidad inicial como en el juego solo
 let gameOver = false;
 let pipeIntervals = [];  // Array to store pipe intervals for both players
 
@@ -196,7 +201,7 @@ function drawBoundaries() {
     ctx.fillRect(halfWidth, 0, halfWidth, headerHeight);
 
     // Draw player labels with status
-    ctx.font = "bold 20px 'Press Start 2P', sans-serif";
+    ctx.font = "bold 20px sans-serif";
 
     // Player 1 status
     if (birds[0].alive) {
@@ -222,6 +227,47 @@ function drawBoundaries() {
     ctx.textAlign = "left";
 }
 
+// Función para dibujar el fondo con scrolling (adaptada del juego solo)
+function drawBackground() {
+    if (background instanceof Image && background.complete) {
+        // Si es una imagen y está cargada, dibujarla con scrolling infinito
+        let imgWidth = board.width;
+        let imgHeight = board.height;
+
+        // Dibuja la primera imagen
+        ctx.drawImage(background, backgroundX, 0, imgWidth, imgHeight);
+
+        // Dibuja la segunda imagen para crear el efecto infinito
+        ctx.drawImage(background, backgroundX + imgWidth, 0, imgWidth, imgHeight);
+
+        // Si la primera imagen se ha movido completamente fuera de la pantalla, reinicia la posición
+        if (backgroundX <= -imgWidth) {
+            backgroundX = 0;
+        }
+    } else if (typeof background === 'string') {
+        // Si es un color, rellenar con ese color (los colores no necesitan scrolling)
+        ctx.fillStyle = background;
+        ctx.fillRect(0, 0, board.width, board.height);
+    } else {
+        // Fallback: color por defecto
+        ctx.fillStyle = "skyblue";
+        ctx.fillRect(0, 0, board.width, board.height);
+    }
+}
+
+// Función para dibujar tuberías con rotación (adaptada del juego solo)
+function drawPipe(ctx, pipe) {
+    ctx.save();
+    ctx.translate(pipe.x + pipe.width / 2, pipe.y + pipe.height / 2);
+
+    if (pipe.rotated) {
+        ctx.rotate(Math.PI); // 180 grados en radianes
+    }
+
+    ctx.drawImage(pipe.img, -pipe.width / 2, -pipe.height / 2, pipe.width, pipe.height);
+    ctx.restore();
+}
+
 async function loadBirdSkin(userId, playerIndex) {
     try {
         if (!userId && playerIndex === 0) {
@@ -245,6 +291,51 @@ async function loadBirdSkin(userId, playerIndex) {
     } catch (error) {
         console.error("Error loading bird skin:", error);
         return "./assets/flappybird.png"; // Fallback to default
+    }
+}
+
+async function loadPipeSkin(userId) {
+    try {
+        if (!userId) {
+            return "./assets/bottompipe.png";
+        }
+
+        const res = await fetch(`${BASE_URL}/shop/get-current-pipe-image`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ userId: userId })
+        });
+
+        const data = await res.json();
+        return data.image_url || "./assets/bottompipe.png";
+    } catch (error) {
+        console.error("Error loading pipe skin:", error);
+        return "./assets/bottompipe.png";
+    }
+}
+
+// Nueva función para cargar el background
+async function loadBackgroundSkin(userId) {
+    try {
+        if (!userId) {
+            return null; // Sin imagen de fondo por defecto
+        }
+
+        const res = await fetch(`${BASE_URL}/shop/get-current-background-image`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ userId: userId })
+        });
+
+        const data = await res.json();
+        return data.image_url;
+    } catch (error) {
+        console.error("Error loading background skin:", error);
+        return null;
     }
 }
 
@@ -283,6 +374,40 @@ function loadBirdImages() {
     });
 }
 
+// Load pipe and background images
+async function loadGameAssets() {
+    try {
+        // Load pipe skin
+        const pipeUrl = await loadPipeSkin(userId);
+        if (pipeUrl) {
+            bottomPipeImg.src = pipeUrl;
+            bottomPipeImg.onload = () => {
+                console.log("Pipe image loaded");
+            };
+        } else {
+            bottomPipeImg.src = "./assets/bottompipe.png";
+        }
+
+        // Load background skin
+        const backgroundUrl = await loadBackgroundSkin(userId);
+        if (backgroundUrl) {
+            backgroundImg.src = backgroundUrl;
+            background = backgroundImg; // Cambiar de color a imagen
+            backgroundImg.onload = () => {
+                console.log("Background image loaded");
+            };
+        } else {
+            console.log("No background image, using default color");
+            background = "skyblue"; // Mantener color por defecto
+        }
+    } catch (error) {
+        console.error("Error loading game assets:", error);
+        // Set fallback assets
+        bottomPipeImg.src = "./assets/bottompipe.png";
+        background = "skyblue";
+    }
+}
+
 // Initialize game
 function initGame() {
     console.log("Initializing multiplayer game");
@@ -300,7 +425,7 @@ function initGame() {
     versusContainer.style.zIndex = "1000";
 
     versusContainer.innerHTML = `
-        <div id="versus-animation" style="width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; font-family: 'Press Start 2P', cursive;">
+        <div id="versus-animation" style="width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; font-family: sans-serif;">
             <div style="display: flex; width: 100%; justify-content: space-between; padding: 0 80px;">
                 <div id="player1-container" style="transform: translateX(-300px); opacity: 0; transition: all 1s ease; text-align: center;">
                     <div style="background-color: rgba(255, 85, 85, 0.3); border-radius: 50%; width: 180px; height: 180px; display: flex; justify-content: center; align-items: center; border: 4px solid #ff5555; box-shadow: 0 0 20px rgba(255, 85, 85, 0.7);">
@@ -323,12 +448,11 @@ function initGame() {
 
     document.body.appendChild(versusContainer);
 
-    // Load images
-    topPipeImg.src = "./assets/toppipe.png";
-    bottomPipeImg.src = "./assets/bottompipe.png";
-
-    // Load bird images
-    loadBirdImages().then(() => {
+    // Load all game assets
+    Promise.all([
+        loadBirdImages(),
+        loadGameAssets()
+    ]).then(() => {
         // Show versus animation and then start the game
         playVersusAnimation(() => {
             startGame();
@@ -352,7 +476,7 @@ function startGame() {
     pipeIntervals.forEach(interval => clearInterval(interval));
     pipeIntervals = [];
 
-    // Set up intervals for each player's pipes
+    // Set up intervals for each player's pipes (mismo timing que el juego solo)
     pipeIntervals.push(setInterval(() => placePipes(0), 1800)); // Left side
     pipeIntervals.push(setInterval(() => placePipes(1), 1800)); // Right side
 
@@ -384,12 +508,18 @@ function resetGameState() {
 
     // Reset game state
     gameOver = false;
-    velocityX = -10;
+    velocityX = -10; // Velocidad inicial más rápida para multiplayer
+    backgroundX = 0; // Reinicia la posición del fondo
 }
 
 function update() {
     // Verificar si ambos jugadores están muertos
     if (gameOver) {
+        // Guarda la puntuación de ambos jugadores
+        localStorage.setItem('player1Score', Math.floor(birds[0].score));
+        localStorage.setItem('player2Score', Math.floor(birds[1].score));
+        localStorage.setItem("playingStatus", "true");
+
         // Determinar el ganador basado en los puntajes
         let winner;
         let player1Score = Math.floor(birds[0].score);
@@ -406,10 +536,6 @@ function update() {
         // Guardar el ganador en localStorage
         localStorage.setItem('winner', winner);
 
-        // También guardamos los puntajes para referencia
-        localStorage.setItem('player1Score', player1Score);
-        localStorage.setItem('player2Score', player2Score);
-
         // Redirige a la página de Game Over
         window.location.href = 'GameOverMultiplayer.html';
         return;
@@ -417,9 +543,11 @@ function update() {
 
     ctx.clearRect(0, 0, board.width, board.height);
 
-    // Fondo
-    ctx.fillStyle = "skyblue";
-    ctx.fillRect(0, 0, board.width, board.height);
+    // Actualiza la posición del fondo para el scrolling
+    backgroundX += velocityX;
+
+    // Fondo usando la nueva función con scrolling
+    drawBackground();
 
     // Draw divider and headers
     drawBoundaries();
@@ -471,7 +599,7 @@ function update() {
         ctx.fill();
 
         // Draw score text
-        ctx.font = "bold 26px 'Press Start 2P', sans-serif";
+        ctx.font = "bold 26px sans-serif";
         ctx.fillStyle = "white";
         ctx.textAlign = "center";
         ctx.fillText(Math.floor(bird.score), scoreX, 90);
@@ -483,8 +611,10 @@ function update() {
         gameOver = true;
     }
 
-    // Gradually increase difficulty
-    velocityX -= 0.005;
+    // Ajuste muy sutil de aceleración (como en el juego solo)
+    if (velocityX > -2.5) {
+        velocityX -= 0.0003;
+    }
 
     requestAnimationFrame(update);
 }
@@ -515,7 +645,7 @@ function processPipes(playerIndex) {
 
         // Only draw pipes within this player's boundary
         if (pipe.x + pipe.width >= leftBoundary && pipe.x <= rightBoundary) {
-            ctx.drawImage(pipe.img, pipe.x, pipe.y, pipe.width, pipe.height);
+            drawPipe(ctx, pipe); // Usar la función de dibujo con rotación
         }
 
         // Score when passing a pipe (solo si está vivo)
@@ -554,37 +684,39 @@ function placePipes(playerIndex) {
         pipeX = boardWidth;
     }
 
-    const randomPipeY = -pipeHeight / 4 - Math.random() * (pipeHeight / 2);
+    let randomPipeY = -pipeHeight / 4 - Math.random() * (pipeHeight / 2);
 
-    // Add top pipe
+    // Tubería superior (rotada 180°, como en el juego solo)
     pipeArrays[playerIndex].push({
-        img: topPipeImg,
+        img: bottomPipeImg,
         x: pipeX,
         y: randomPipeY,
         width: pipeWidth,
         height: pipeHeight,
-        passed: false
+        passed: false,
+        rotated: false // Tubería superior normal
     });
 
-    // Add bottom pipe
+    // Tubería inferior (normal, como en el juego solo)
     pipeArrays[playerIndex].push({
-        img: bottomPipeImg,
+        img: bottomPipeImg, // Misma imagen
         x: pipeX,
         y: randomPipeY + pipeHeight + openingSpace,
         width: pipeWidth,
         height: pipeHeight,
-        passed: false
+        passed: false,
+        rotated: true // Tubería inferior rotada 180°
     });
 }
 
 function moveBird(e) {
     // Player 1 uses Space or X
     if ((e.code === "Space" || e.code === "KeyX") && birds[0].alive) {
-        birds[0].velocityY = -6; // Slightly weaker jump for fairness
+        birds[0].velocityY = -7; // Mismo impulso que en el juego solo
     }
     // Player 2 uses Arrow Up
     else if (e.code === "ArrowUp" && birds[1].alive) {
-        birds[1].velocityY = -6;
+        birds[1].velocityY = -7;
     }
 }
 
